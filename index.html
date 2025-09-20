@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Controle de Gastos • OneGroup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0f1220;
+      --surface: #171b2e;
+      --muted: #9aa3b2;
+      --text: #e6e8ef;
+      --accent: #6c6ff9;
+      --green: #23d16b;
+      --red: #ff4d4f;
+      --outline: #232844;
+      --chip: #111525;
+      --chip-border: #263055;
+      --btn: #222845;
+      --btn-hover: #2a3154;
+      --shadow: 0 8px 28px rgba(0,0,0,.35);
+      --radius-xl: 18px;
+      --radius-lg: 14px;
+      --radius-md: 12px;
+      --radius-sm: 10px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      letter-spacing:.2px;
+    }
+    .container{max-width:1120px;margin:32px auto;padding:0 20px}
+    header{
+      display:flex;align-items:center;gap:16px;margin-bottom:14px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+      background:linear-gradient(135deg,#2d325a,#0b0e1a); border:1px solid var(--outline);
+      box-shadow: var(--shadow);
+      font-weight:800; letter-spacing:.5px;
+    }
+    h1{font-size:36px;margin:0;font-weight:800}
+    .topbar{
+      display:flex;align-items:center;gap:12px; margin-left:auto;
+    }
+    .pill{background:#1b2042;border:1px solid var(--outline);color:#cbd1ff;padding:10px 16px;border-radius:999px;font-weight:700}
+    .month-wrap{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--outline);padding:8px 12px;border-radius:999px}
+    .month-wrap input[type="month"]{background:transparent;border:none;color:var(--text);font-weight:600;outline:none}
+    .grand-saldo{font-size:28px;font-weight:800;color:var(--green)}
+
+    /* grid of summary cards */
+    .grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px;margin-bottom:22px
+    }
+    .card{
+      background:var(--surface);border:1px solid var(--outline);border-radius:var(--radius-xl);
+      padding:18px 22px; box-shadow:var(--shadow);
+    }
+    .card h3{margin:0 0 8px 0;font-size:14px;letter-spacing:.4px;color:var(--muted)}
+    .money{font-size:30px;font-weight:900}
+    .money.green{color:var(--green)}
+    .money.red{color:var(--red)}
+
+    /* form */
+    .panel{
+      background:var(--surface);border:1px solid var(--outline);border-radius:var(--radius-xl);
+      padding:20px 18px;margin-bottom:18px; box-shadow: var(--shadow);
+    }
+    .panel h2{margin:0 0 16px 2px;font-size:22px}
+    .row{display:grid; grid-template-columns:170px 1fr 180px 200px 1fr 140px; gap:12px}
+    .row + .row{margin-top:12px}
+    .control{
+      position:relative; display:flex; align-items:center; height:46px; background:#12162a; border:1px solid var(--outline);
+      border-radius:var(--radius-lg); padding:0 12px;
+    }
+    .control:focus-within{outline:2px solid #313a70}
+    select, input{width:100%;background:transparent;border:none;color:var(--text);outline:none;font-size:14px}
+    input::placeholder{color:#5d6680}
+    .btn{
+      height:46px; border:none; border-radius:var(--radius-lg); background:var(--btn); color:#eaf0ff; font-weight:700;
+      cursor:pointer; transition:transform .08s ease, background .2s ease; box-shadow: var(--shadow);
+    }
+    .btn:hover{background:var(--btn-hover)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:linear-gradient(180deg,#3a69ff,#384af7)}
+    .btn.primary:hover{filter:brightness(1.05)}
+
+    /* filters */
+    .filters{display:grid;grid-template-columns:200px 1fr 140px; gap:12px; margin-top:12px}
+
+    /* table/list */
+    .table{
+      background:var(--surface); border:1px solid var(--outline); border-radius:var(--radius-xl); box-shadow:var(--shadow);
+      overflow:hidden
+    }
+    .thead, .trow{display:grid; grid-template-columns:150px 1fr 220px 140px 160px 160px; gap:10px; align-items:center}
+    .thead{padding:12px 16px; background:#141830; color:#a6aecc; font-size:12px; letter-spacing:.5px; text-transform:uppercase}
+    .trow{padding:16px 16px; border-top:1px solid var(--outline)}
+    .trow .value{font-weight:800}
+    .value.negative{color:var(--red)}
+    .value.positive{color:var(--green)}
+    .chip{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; border:1px solid var(--chip-border);
+      background:var(--chip); color:#c9d0ff; font-weight:700; font-size:12px
+    }
+    .actions{display:flex; gap:8px}
+    .btn.small{height:38px; padding:0 14px; font-weight:700; border:1px solid var(--outline); background:#1a2040}
+    .btn.small.red{background:#2a1420}
+
+    /* responsive */
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+      .filters{grid-template-columns:1fr}
+      .thead{display:none}
+      .trow{grid-template-columns:1fr; gap:6px}
+    }
+    footer{color:#778; margin:20px 4px; font-size:12px; text-align:right}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">OG</div>
+      <h1>Controle de Gastos</h1>
+      <div class="topbar">
+        <div class="pill" id="workspacePill">OneGroup</div>
+        <div class="month-wrap">
+          <input type="month" id="monthPicker"/>
+        </div>
+        <div class="grand-saldo" id="grandSaldo">R$ 0,00</div>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="resumo">
+      <div class="card">
+        <h3>Receitas</h3>
+        <div class="money green" id="sumReceitas">R$ 0,00</div>
+      </div>
+      <div class="card">
+        <h3>Despesas</h3>
+        <div class="money red" id="sumDespesas">R$ 0,00</div>
+      </div>
+      <div class="card">
+        <h3>Saldo</h3>
+        <div class="money green" id="sumSaldo">R$ 0,00</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="nova movimentação">
+      <h2>NOVA MOVIMENTAÇÃO</h2>
+      <div class="row">
+        <label class="control" title="tipo">
+          <select id="tipo">
+            <option value="">tipo</option>
+            <option value="receita">receita</option>
+            <option value="despesa">despesa</option>
+          </select>
+        </label>
+        <label class="control">
+          <input id="descricao" placeholder="descrição (opcional)"/>
+        </label>
+        <label class="control">
+          <input id="data" type="date" placeholder="dd/mm/aaaa"/>
+        </label>
+        <label class="control">
+          <select id="categoria">
+            <option value="">categoria</option>
+            <option value="alimentação">alimentação</option>
+            <option value="renda">renda</option>
+            <option value="moradia">moradia</option>
+            <option value="transporte">transporte</option>
+            <option value="lazer">lazer</option>
+            <option value="saúde">saúde</option>
+            <option value="educação">educação</option>
+            <option value="outros">outros</option>
+          </select>
+        </label>
+        <label class="control">
+          <input id="valor" inputmode="decimal" placeholder="valor (ex: 123,45)"/>
+        </label>
+        <button class="btn primary" id="addBtn">adicionar</button>
+      </div>
+      <div class="filters">
+        <label class="control">
+          <select id="filtroCategoria">
+            <option value="">todas as categorias</option>
+            <option value="alimentação">alimentação</option>
+            <option value="renda">renda</option>
+            <option value="moradia">moradia</option>
+            <option value="transporte">transporte</option>
+            <option value="lazer">lazer</option>
+            <option value="saúde">saúde</option>
+            <option value="educação">educação</option>
+            <option value="outros">outros</option>
+          </select>
+        </label>
+        <label class="control">
+          <input id="busca" placeholder="buscar por descrição…"/>
+        </label>
+        <button class="btn" id="limparFiltros">limpar filtros</button>
+      </div>
+    </section>
+
+    <section class="table" aria-label="lista">
+      <div class="thead">
+        <div>Data</div>
+        <div>Descrição</div>
+        <div>Categoria</div>
+        <div>Tipo</div>
+        <div>Valor</div>
+        <div>Ações</div>
+      </div>
+      <div id="tbody"></div>
+    </section>
+
+    <footer>OneGroup • 2025</footer>
+  </div>
+
+  <script>
+    // ===== Helpers de moeda/data para pt-BR =====
+    const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL'});
+    const fmtMoney = n => BRL.format(n || 0);
+    const parseMoney = (s) => {
+      if (!s) return 0;
+      // aceita "123,45" ou "123.45" ou "1.234,56"
+      const clean = String(s).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.');
+      const x = Number(clean);
+      return isFinite(x) ? x : 0;
+    }
+    const pad = (n)=> String(n).padStart(2,'0');
+    const onlyMonth = (iso) => iso?.slice(0,7); // YYYY-MM
+
+    // ===== Estado/Persistência =====
+    const KEY = 'og.ledger.v1';
+    /** @type {Array<{id:string,data:string,descricao:string,categoria:string,tipo:'receita'|'despesa',valor:number}>} */
+    let items = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+    // Demo: se vazio, cria duas linhas baseadas no layout
+    if (!items.length){
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = pad(now.getMonth()+1);
+      items = [
+        { id: crypto.randomUUID(), data: `${y}-${m}-30`, descricao: 'Salário', categoria: 'renda', tipo: 'receita', valor: 5000 },
+        { id: crypto.randomUUID(), data: `${y}-${m}-31`, descricao: 'Alimentação', categoria: 'alimentação', tipo: 'despesa', valor: 500 }
+      ];
+      localStorage.setItem(KEY, JSON.stringify(items));
+    }
+
+    // ===== UI Refs =====
+    const monthPicker = document.getElementById('monthPicker');
+    const sumReceitas = document.getElementById('sumReceitas');
+    const sumDespesas = document.getElementById('sumDespesas');
+    const sumSaldo = document.getElementById('sumSaldo');
+    const grandSaldo = document.getElementById('grandSaldo');
+    const tbody = document.getElementById('tbody');
+
+    const tipo = document.getElementById('tipo');
+    const descricao = document.getElementById('descricao');
+    const data = document.getElementById('data');
+    const categoria = document.getElementById('categoria');
+    const valor = document.getElementById('valor');
+    const addBtn = document.getElementById('addBtn');
+
+    const filtroCategoria = document.getElementById('filtroCategoria');
+    const busca = document.getElementById('busca');
+    const limparFiltros = document.getElementById('limparFiltros');
+
+    // ===== Estado de edição =====
+    let editingId = null; // se não-null, estamos salvando edição
+
+    // ===== Inicialização =====
+    const now = new Date();
+    monthPicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+
+    render();
+
+    // ===== Listeners =====
+    monthPicker.addEventListener('change', render);
+    filtroCategoria.addEventListener('change', render);
+    busca.addEventListener('input', render);
+    limparFiltros.addEventListener('click', () =>{
+      filtroCategoria.value = '';
+      busca.value = '';
+      render();
+    });
+
+    // Máscara simples de moeda on-blur
+    valor.addEventListener('blur', () => {
+      const v = parseMoney(valor.value);
+      valor.value = v ? v.toFixed(2).replace('.',',') : '';
+    });
+
+    addBtn.addEventListener('click', () => {
+      const t = tipo.value;
+      const d = data.value; // YYYY-MM-DD
+      const c = categoria.value;
+      const desc = descricao.value.trim();
+      const v = parseMoney(valor.value);
+
+      // validações básicas
+      if(!t){return alert('Selecione o tipo.');}
+      if(!d){return alert('Informe a data.');}
+      if(!c){return alert('Selecione a categoria.');}
+      if(!v || v <= 0){return alert('Informe um valor válido.');}
+
+      if (editingId){
+        const idx = items.findIndex(i => i.id === editingId);
+        if(idx>=0){ items[idx] = { ...items[idx], tipo:t, data:d, categoria:c, descricao:desc, valor:v }; }
+        editingId = null;
+        addBtn.textContent = 'adicionar';
+      } else {
+        items.unshift({ id: crypto.randomUUID(), tipo:t, data:d, categoria:c, descricao:desc, valor:v });
+      }
+
+      localStorage.setItem(KEY, JSON.stringify(items));
+      // limpa form
+      tipo.value = '';
+      descricao.value = '';
+      data.value = '';
+      categoria.value = '';
+      valor.value = '';
+
+      render();
+    });
+
+    // ===== Render =====
+    function render(){
+      const month = monthPicker.value; // YYYY-MM
+      const q = busca.value.trim().toLowerCase();
+      const cat = filtroCategoria.value;
+
+      const visible = items.filter(i => {
+        if (onlyMonth(i.data) !== month) return false;
+        if (cat && i.categoria !== cat) return false;
+        if (q && !`${i.descricao}`.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      // Totais do mês
+      const receitas = visible.filter(i=>i.tipo==='receita').reduce((a,b)=>a+b.valor,0);
+      const despesas = visible.filter(i=>i.tipo==='despesa').reduce((a,b)=>a+b.valor,0);
+      const saldo = receitas - despesas;
+
+      sumReceitas.textContent = fmtMoney(receitas);
+      sumDespesas.textContent = fmtMoney(despesas);
+      sumSaldo.textContent = fmtMoney(saldo);
+      grandSaldo.textContent = fmtMoney(saldo);
+
+      // Tabela
+      tbody.innerHTML = '';
+      if (!visible.length){
+        const empty = document.createElement('div');
+        empty.className = 'trow';
+        empty.innerHTML = '<div style="grid-column: 1 / -1; color:#9aa3b2">Sem lançamentos para este mês.</div>';
+        tbody.appendChild(empty);
+        return;
+      }
+
+      for (const i of visible){
+        const row = document.createElement('div');
+        row.className = 'trow';
+        const date = new Date(i.data + 'T00:00:00');
+        const d = `${pad(date.getDate())}/${pad(date.getMonth()+1)}/${date.getFullYear()}`;
+        const valueClass = i.tipo==='despesa' ? 'negative' : 'positive';
+        const sign = i.tipo==='despesa' ? '-' : '+';
+        row.innerHTML = `
+          <div>${d}</div>
+          <div>${i.descricao || '<span style="color:#6e7796">—</span>'}</div>
+          <div><span class="chip">${i.categoria}</span></div>
+          <div>${i.tipo}</div>
+          <div class="value ${valueClass}">${sign} ${fmtMoney(i.valor)}</div>
+          <div class="actions">
+            <button class="btn small" data-act="edit" data-id="${i.id}">editar</button>
+            <button class="btn small red" data-act="del" data-id="${i.id}">excluir</button>
+          </div>
+        `;
+        tbody.appendChild(row);
+      }
+
+      // actions
+      tbody.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const act = btn.getAttribute('data-act');
+          if (act === 'del') {
+            if (confirm('Excluir este lançamento?')){
+              items = items.filter(x => x.id !== id);
+              localStorage.setItem(KEY, JSON.stringify(items));
+              render();
+            }
+          } else if (act === 'edit'){
+            const it = items.find(x => x.id === id);
+            if(!it) return;
+            tipo.value = it.tipo;
+            descricao.value = it.descricao || '';
+            data.value = it.data;
+            categoria.value = it.categoria;
+            valor.value = String(it.valor).replace('.', ',');
+            editingId = id;
+            addBtn.textContent = 'salvar';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
