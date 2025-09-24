@@ -223,25 +223,24 @@
   </div>
 
   <script>
-    // ===== Helpers de moeda/data para pt-BR =====
+    // Helpers de moeda/data para BR
     const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL'});
     const fmtMoney = n => BRL.format(n || 0);
     const parseMoney = (s) => {
       if (!s) return 0;
-      // aceita "123,45" ou "123.45" ou "1.234,56"
       const clean = String(s).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.');
       const x = Number(clean);
       return isFinite(x) ? x : 0;
     }
     const pad = (n)=> String(n).padStart(2,'0');
-    const onlyMonth = (iso) => iso?.slice(0,7); // YYYY-MM
+    const onlyMonth = (iso) => iso?.slice(0,7);
 
-    // ===== Estado/Persistência =====
+    // Estado/Persistência
     const KEY = 'og.ledger.v1';
     /** @type {Array<{id:string,data:string,descricao:string,categoria:string,tipo:'receita'|'despesa',valor:number}>} */
     let items = JSON.parse(localStorage.getItem(KEY) || '[]');
 
-    // Demo: se vazio, cria duas linhas baseadas no layout
+    // se vazio, cria duas linhas baseadas no layout
     if (!items.length){
       const now = new Date();
       const y = now.getFullYear();
@@ -253,7 +252,7 @@
       localStorage.setItem(KEY, JSON.stringify(items));
     }
 
-    // ===== UI Refs =====
+    // UI Refs 
     const monthPicker = document.getElementById('monthPicker');
     const sumReceitas = document.getElementById('sumReceitas');
     const sumDespesas = document.getElementById('sumDespesas');
@@ -272,16 +271,16 @@
     const busca = document.getElementById('busca');
     const limparFiltros = document.getElementById('limparFiltros');
 
-    // ===== Estado de edição =====
+    // Estado de edição
     let editingId = null; // se não-null, estamos salvando edição
 
-    // ===== Inicialização =====
+    // Inicialização 
     const now = new Date();
     monthPicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
 
     render();
 
-    // ===== Listeners =====
+    // Listeners 
     monthPicker.addEventListener('change', render);
     filtroCategoria.addEventListener('change', render);
     busca.addEventListener('input', render);
@@ -291,7 +290,7 @@
       render();
     });
 
-    // Máscara simples de moeda on-blur
+    // Máscara simples de moeda
     valor.addEventListener('blur', () => {
       const v = parseMoney(valor.value);
       valor.value = v ? v.toFixed(2).replace('.',',') : '';
@@ -299,7 +298,7 @@
 
     addBtn.addEventListener('click', () => {
       const t = tipo.value;
-      const d = data.value; // YYYY-MM-DD
+      const d = data.value; 
       const c = categoria.value;
       const desc = descricao.value.trim();
       const v = parseMoney(valor.value);
@@ -330,7 +329,7 @@
       render();
     });
 
-    // ===== Render =====
+    // Render 
     function render(){
       const month = monthPicker.value; // YYYY-MM
       const q = busca.value.trim().toLowerCase();
@@ -343,7 +342,7 @@
         return true;
       });
 
-      // Totais do mês
+      // Totais
       const receitas = visible.filter(i=>i.tipo==='receita').reduce((a,b)=>a+b.valor,0);
       const despesas = visible.filter(i=>i.tipo==='despesa').reduce((a,b)=>a+b.valor,0);
       const saldo = receitas - despesas;
@@ -384,7 +383,6 @@
         tbody.appendChild(row);
       }
 
-      // actions
       tbody.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-id');
