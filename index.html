@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Controle de Gastos • OneGroup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">OG</div>
+      <h1>Controle de Gastos</h1>
+      <div class="topbar">
+        <div class="pill" id="workspacePill">OneGroup</div>
+        <div class="month-wrap">
+          <input type="month" id="monthPicker"/>
+        </div>
+        <div class="grand-saldo" id="grandSaldo">R$ 0,00</div>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="resumo">
+      <div class="card">
+        <h3>Receitas</h3>
+        <div class="money green" id="sumReceitas">R$ 0,00</div>
+      </div>
+      <div class="card">
+        <h3>Despesas</h3>
+        <div class="money red" id="sumDespesas">R$ 0,00</div>
+      </div>
+      <div class="card">
+        <h3>Saldo</h3>
+        <div class="money green" id="sumSaldo">R$ 0,00</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="nova movimentação">
+      <h2>NOVA MOVIMENTAÇÃO</h2>
+      <div class="row">
+        <label class="control" title="tipo">
+          <select id="tipo">
+            <option value="">tipo</option>
+            <option value="receita">receita</option>
+            <option value="despesa">despesa</option>
+          </select>
+        </label>
+        <label class="control">
+          <input id="descricao" placeholder="descrição (opcional)"/>
+        </label>
+        <label class="control">
+          <input id="data" type="date" placeholder="dd/mm/aaaa"/>
+        </label>
+        <label class="control">
+          <select id="categoria">
+            <option value="">categoria</option>
+            <option value="alimentação">alimentação</option>
+            <option value="renda">renda</option>
+            <option value="moradia">moradia</option>
+            <option value="transporte">transporte</option>
+            <option value="lazer">lazer</option>
+            <option value="saúde">saúde</option>
+            <option value="educação">educação</option>
+            <option value="outros">outros</option>
+          </select>
+        </label>
+        <label class="control">
+          <input id="valor" inputmode="decimal" placeholder="valor (ex: 123,45)"/>
+        </label>
+        <button class="btn primary" id="addBtn">adicionar</button>
+      </div>
+      <div class="filters">
+        <label class="control">
+          <select id="filtroCategoria">
+            <option value="">todas as categorias</option>
+            <option value="alimentação">alimentação</option>
+            <option value="renda">renda</option>
+            <option value="moradia">moradia</option>
+            <option value="transporte">transporte</option>
+            <option value="lazer">lazer</option>
+            <option value="saúde">saúde</option>
+            <option value="educação">educação</option>
+            <option value="outros">outros</option>
+          </select>
+        </label>
+        <label class="control">
+          <input id="busca" placeholder="buscar por descrição…"/>
+        </label>
+        <button class="btn" id="limparFiltros">limpar filtros</button>
+      </div>
+    </section>
+
+    <section class="table" aria-label="lista">
+      <div class="thead">
+        <div>Data</div>
+        <div>Descrição</div>
+        <div>Categoria</div>
+        <div>Tipo</div>
+        <div>Valor</div>
+        <div>Ações</div>
+      </div>
+      <div id="tbody"></div>
+    </section>
+
+    <footer>OneGroup • 2025</footer>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
