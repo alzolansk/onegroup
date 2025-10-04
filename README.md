@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# onegroup-banl
-Sistema de controle de gastos 
-=======
 # Onegroup-bank
 # 📘 Controle de Gastos – Projeto Acadêmico
 
@@ -72,4 +68,3 @@ Ele funciona 100% no navegador, utilizando **HTML, CSS e JavaScript puro**, com 
 * Projeto desenvolvido para fins de **aprendizado** em **desenvolvimento front-end**.
 * Código comentado e dividido em **camadas lógicas** (helpers, estado, renderização, interações).
 * Demonstra conceitos de **CRUD em memória + persistência local** sem uso de frameworks.
->>>>>>> f24ebb1cffc6a56c95c826c22361e59541908397
