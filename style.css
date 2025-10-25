@@ -1,6 +1,10 @@
-/* tema (tokens globais) */
+/* ===========================
+   tema (tokens globais)
+   =========================== */
 
-:root {
+/* padrão: dark */
+:root,
+:root.theme-dark {
   /* cores base */
   --bg: #0f1220;
   --surface: #171b2e;
@@ -20,12 +24,15 @@
   --text:          #e6e8ef;
   --text-muted:    #9aa3b2;
 
+  /* branding */
   --brand:         #3a63ff;
   --brand-2:       #2a4de6;
+
   /* semânticas */
   --positive:      #2ecc71;
   --negative:      #ff4d4f;
 
+  /* componentes */
   --chip-bg:       rgba(230,232,239,.08);
   --chip-border:   rgba(255,255,255,.10);
 
@@ -43,12 +50,52 @@
   --radius-lg:     12px;
   --radius-xl:     16px;
 
+  /* aliases para compat */
   --green:         var(--positive);
   --red:           var(--negative);
   --muted:         var(--text-muted);
 
   color-scheme: dark;
 }
+
+/* light mode */
+:root.theme-light {
+  --bg:            #eef1f6;          /* fundo neutro suave (não 100% branco) */
+  --surface:       #ffffff;          /* cards */
+  --surface-2:     #f6f7fb;          /* controles/pill/thead */
+  --outline:       rgba(15, 23, 42, .06);
+  --text:          #1f2937;          /* cinza-azulado (menos preto) */
+  --text-muted:    #6b7280;
+
+  --brand:         #2f54eb;          /* azul do branding */
+  --brand-2:       #2243db;
+
+  --positive:      #16a34a;
+  --negative:      #e11d48;
+
+  --chip-bg:       rgba(31,41,55,.07);
+  --chip-border:   rgba(15, 23, 42, .08);
+
+  --input-bg:      #ffffff;          /* inputs brancos... */
+  --input-border:  rgba(15, 23, 42, .10);
+  --input-focus:   #2f54eb;          /* ...mas foco azul suave */
+
+  --btn:           linear-gradient(180deg, #2f54eb, #2243db);
+  --btn-hover:     #2243db;
+
+  --glass:         rgba(255,255,255,.78); /* toasts/modal “glass” mais leitoso */
+  --shadow:        0 10px 28px rgba(2,6,23,.10); /* sombra mais curta e leve */
+
+  --radius-lg:     12px;
+  --radius-xl:     16px;
+
+  --green:         var(--positive);
+  --red:           var(--negative);
+  --muted:         var(--text-muted);
+
+  color-scheme: light;
+}
+
 
 /* base */
 html, body {
@@ -85,7 +132,7 @@ body {
   flex-direction: column;
 }
 
-/* a tabela não cresce errada */
+/* a tabela não cresce indefinidamente */
 .table {
   flex: 0 0 auto;
 }
@@ -243,7 +290,7 @@ input::placeholder {
   color: var(--text-muted);
 }
 
-/* btns */
+/* botões */
 .btn {
   height: 46px;
   border: 1px solid var(--outline);
@@ -353,6 +400,7 @@ input::placeholder {
   cursor: pointer;
 }
 
+/* seta do select (usa mask pra herdar a cor do texto) */
 .control.select::after {
   content: "";
   position: absolute;
@@ -569,7 +617,7 @@ footer {
 @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes toast-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(8px); opacity: 0; } }
 
-/* espaça mais os cards e deixa sombras mais sutis */
+/* espaça mais os cards e deixa sombras mais “macias” */
 .card,
 .panel,
 .table {
@@ -596,6 +644,7 @@ footer {
   background: color-mix(in oklab, var(--surface) 96%, var(--surface-2) 4%);
 }
 
+/* botões “normais” menos contrastantes */
 .btn {
   background: color-mix(in oklab, var(--surface-2) 88%, var(--surface) 12%);
   border-color: var(--outline);
@@ -604,6 +653,7 @@ footer {
   background: color-mix(in oklab, var(--red) 10%, var(--surface-2) 90%);
 }
 
+/* chips com contraste reduzido */
 .chip {
   background: var(--chip-bg);
   border-color: var(--chip-border);
@@ -626,8 +676,31 @@ footer {
     var(--glass) 28%);
 }
 
+/* bordas dos cartões com leve “soft edge” */
 .card, .panel, .table { border-radius: 18px; }
 
+
+/* toggle tema */
+.theme-toggle {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--outline);
+  background: var(--surface-2);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.theme-toggle:hover { filter: brightness(1.05); }
+.theme-toggle .sun,
+.theme-toggle .moon { display: none; }
+:root.theme-dark .theme-toggle .moon { display: inline; }
+:root.theme-dark .theme-toggle { color: #f5f7ff; }
+:root.theme-light .theme-toggle .sun  { display: inline; }
+
+/* botão do card (gráfico) */
 .card {
   position: relative;
 }

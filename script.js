@@ -13,6 +13,12 @@ const parseMoney = (s) => {
 const pad = (n) => String(n).padStart(2, '0');
 const onlyMonth = (iso) => iso?.slice(0, 7); // YYYY-MM
 
+// tema inicial (localStorage)
+const THEME_KEY = 'og.theme';
+const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+document.documentElement.classList.toggle('theme-light', savedTheme === 'light');
+document.documentElement.classList.toggle('theme-dark',  savedTheme !== 'light');
+
 // ===== Estado / Persistência =====
 const KEY = 'og.ledger.v1';
 let items = JSON.parse(localStorage.getItem(KEY) || '[]');
@@ -185,21 +191,21 @@ const chartCanvas = document.getElementById('chartCanvas').getContext('2d');
 
 let chartInstance = null;
 
-// paleta por categoria
+// paleta por categoria (fixa pra ficar consistente)
 const CAT_COLORS = {
-  'alimentação': '#f59e0b', 
-  'renda':       '#0ea5e9',
-  'moradia':     '#8b5cf6',
-  'transporte':  '#14b8a6',
-  'lazer':       '#eab308',
-  'saúde':       '#ef4444',
-  'educação':    '#10b981',
-  'outros':      '#64748b'
+  'alimentação': '#f59e0b', // laranja
+  'renda':       '#0ea5e9', // azul claro
+  'moradia':     '#8b5cf6', // roxo
+  'transporte':  '#14b8a6', // teal
+  'lazer':       '#eab308', // amarelo
+  'saúde':       '#ef4444', // vermelho
+  'educação':    '#10b981', // verde
+  'outros':      '#64748b'  // slate
 };
 
 function openChartModal(kind) {
   // kind: 'receita' | 'despesa'
-  const month = monthPicker.value; 
+  const month = monthPicker.value; // YYYY-MM
   const monthItems = items.filter(i => i.data?.slice(0,7) === month && i.tipo === (kind === 'receita' ? 'receita' : 'despesa'));
 
   // agrupa por categoria
@@ -217,6 +223,7 @@ function openChartModal(kind) {
   const bg = labels.map(l => CAT_COLORS[l] || '#94a3b8');
   const border = bg.map(() => getComputedStyle(document.documentElement).getPropertyValue('--surface') || '#fff');
 
+  // destrói gráfico antigo
   if (chartInstance) chartInstance.destroy();
 
   chartInstance = new Chart(chartCanvas, {
@@ -225,8 +232,8 @@ function openChartModal(kind) {
       labels,
       datasets: [{
         data,
-        backgroundColor: bg.map(hex => hex + 'cc'),
-        borderColor: '#0000', 
+        backgroundColor: bg.map(hex => hex + 'cc'), // leve transparência
+        borderColor: '#0000', // sem borda
         hoverOffset: 8
       }]
     },
@@ -251,7 +258,7 @@ function openChartModal(kind) {
         }
       },
       layout: { padding: 6 },
-      cutout: '56%'
+      cutout: '56%' // donut mais bonito
     }
   });
 
@@ -265,6 +272,7 @@ chartClose?.addEventListener('click', () => chartModal.style.display = 'none');
 chartModal?.addEventListener('click', (e) => { if (e.target === chartModal) chartModal.style.display = 'none'; });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape') chartModal.style.display = 'none'; });
 
+// eventos dos botões
 document.getElementById('btnChartReceitas')?.addEventListener('click', () => openChartModal('receita'));
 document.getElementById('btnChartDespesas')?.addEventListener('click', () => openChartModal('despesa'));
 
@@ -293,12 +301,14 @@ function render() {
   // itens do mês (sem filtro de busca/categoria)
   const monthItems = items.filter(i => onlyMonth(i.data) === month);
 
+  // itens visíveis (com filtro de busca/categoria)
   const visible = monthItems.filter(i => {
     if (cat && i.categoria !== cat) return false;
     if (q && !`${i.descricao}`.toLowerCase().includes(q)) return false;
     return true;
   });
 
+  // totais com base nos visíveis
   const receitas = visible.filter(i => i.tipo === 'receita').reduce((a, b) => a + b.valor, 0);
   const despesas = visible.filter(i => i.tipo === 'despesa').reduce((a, b) => a + b.valor, 0);
   const saldo = receitas - despesas;
@@ -495,7 +505,10 @@ function toast(message, type = 'info', ms = 3000) {
     </button>
     `;
 
+
+    // fechar manual
     el.querySelector('.close').addEventListener('click', () => dismiss(el));
+    // fechar automático
     const timer = setTimeout(() => dismiss(el), ms);
 
     // remover com animação
@@ -507,5 +520,16 @@ function toast(message, type = 'info', ms = 3000) {
 
     host.appendChild(el);
 }
+
+const themeToggle = document.getElementById('themeToggle');
+themeToggle?.addEventListener('click', () => {
+  const isLight = document.documentElement.classList.contains('theme-light');
+  // alterna classes
+  document.documentElement.classList.toggle('theme-light', !isLight);
+  document.documentElement.classList.toggle('theme-dark',  isLight);
+  // salva
+  localStorage.setItem(THEME_KEY, !isLight ? 'light' : 'dark');
+});
+
 
 render();
