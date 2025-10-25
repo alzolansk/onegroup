@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Controle de Gastos • OneGroup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/png" href="/imagens/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div id="toaster" aria-live="polite" aria-atomic="true"></div>
+    <header>
+
+        <button id="themeToggle" class="theme-toggle" aria-label="alternar tema" title="alternar tema">
+            <svg class="sun" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="23"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="23" y2="12"/><line x1="4.2" y1="4.2" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.8" y2="19.8"/><line x1="4.2" y1="19.8" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.8" y2="4.2"/></g></svg>
+            <svg class="moon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M21 12.8A9 9 0 0 1 11.2 3 7.5 7.5 0 1 0 21 12.8z"/></svg>
+        </button>
+
+      <div class="logo">OG</div>
+      <h1>Controle de Gastos</h1>
+      <div class="topbar">
+        <div class="pill" id="workspacePill">OneGroup</div>
+        <div class="month-wrap">
+          <input type="month" id="monthPicker"/>
+        </div>
+        <div class="grand-saldo" id="grandSaldo">R$ 0,00</div>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="resumo">
+      <!-- Receitas -->
+      <div class="card">
+        <h3>Receitas</h3>
+        <div class="money green" id="sumReceitas">R$ 0,00</div>
+        <button class="chart-btn" id="btnChartReceitas" title="Ver gráfico de receitas">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.2 12A9.2 9.2 0 1 1 12 2.8V12h9.2z"/>
+            <path d="M12 2.8A9.2 9.2 0 0 1 21.2 12H12V2.8z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Despesas -->
+      <div class="card">
+        <h3>Despesas</h3>
+        <div class="money red" id="sumDespesas">R$ 0,00</div>
+        <button class="chart-btn" id="btnChartDespesas" title="Ver gráfico de despesas">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.2 12A9.2 9.2 0 1 1 12 2.8V12h9.2z"/>
+            <path d="M12 2.8A9.2 9.2 0 0 1 21.2 12H12V2.8z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="card">
+        <h3>Saldo</h3>
+        <div class="money green" id="sumSaldo">R$ 0,00</div>
+      </div>
+
+    </section>
+
+    <section class="panel movimento" aria-label="nova movimentação">
+    <h2>NOVA MOVIMENTAÇÃO</h2>
+    <div class="row">
+        <label class="control select" title="tipo">
+        <select id="tipo">
+            <option value="" disabled selected>tipo</option>
+            <option value="receita">receita</option>
+            <option value="despesa">despesa</option>
+        </select>
+        </label>
+        <label class="control">
+        <input id="descricao" placeholder="descrição (opcional)"/>
+        </label>
+        <label class="control">
+        <input id="data" type="date" placeholder="dd/mm/aaaa"/>
+        </label>
+        <label class="control select">
+        <select id="categoria">
+            <option value="" disabled selected>categoria</option>
+            <option value="alimentação">alimentação</option>
+            <option value="renda">renda</option>
+            <option value="moradia">moradia</option>
+            <option value="transporte">transporte</option>
+            <option value="lazer">lazer</option>
+            <option value="saúde">saúde</option>
+            <option value="educação">educação</option>
+            <option value="outros">outros</option>
+        </select>
+        </label>
+        <label class="control">
+        <input id="valor" inputmode="decimal" placeholder="valor (ex: 123,45)"/>
+        </label>
+        <button class="btn primary" id="addBtn">adicionar</button>
+    </div>
+    </section>
+
+    <section class="panel filtros" aria-label="filtros">
+    <h2>FILTROS</h2>
+    <div class="filters">
+        <label class="control select">
+        <select id="filtroCategoria">
+            <option value="">todas as categorias</option>
+            <option value="alimentação">alimentação</option>
+            <option value="renda">renda</option>
+            <option value="moradia">moradia</option>
+            <option value="transporte">transporte</option>
+            <option value="lazer">lazer</option>
+            <option value="saúde">saúde</option>
+            <option value="educação">educação</option>
+            <option value="outros">outros</option>
+        </select>
+        </label>
+        <label class="control">
+        <input id="busca" placeholder="buscar por descrição…"/>
+        </label>
+        <button class="btn" id="limparFiltros">limpar filtros</button>
+    </div>
+    </section>
+
+    <section class="table" aria-label="lista">
+      <div class="thead">
+        <div>Data</div>
+        <div>Descrição</div>
+        <div>Categoria</div>
+        <div>Tipo</div>
+        <div>Valor</div>
+        <div>Ações</div>
+      </div>
+      <div id="tbody"></div>
+    </section>
+
+    <div id="viewAllWrap">
+    <button id="viewAllBtn">ver todos</button>
+    </div>
+
+    <div id="listModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+        <div class="modal-header">
+        <div id="modalTitle" class="modal-title">Todas as movimentações</div>
+        <button class="modal-close" id="closeModalBtn">fechar</button>
+        </div>
+        <div class="modal-body">
+        <section class="table">
+            <div class="thead">
+            <div>Data</div><div>Descrição</div><div>Categoria</div>
+            <div>Tipo</div><div>Valor</div><div>Ações</div>
+            </div>
+            <div id="modalTbody"></div>
+        </section>
+        </div>
+    </div>
+    </div>
+
+    <!-- modal gráficos -->
+    <div class="modal-overlay" id="chartModal" style="display:none">
+      <div class="modal chart-modal">
+        <div class="modal-header">
+          <div class="modal-title" id="chartTitle">Gráfico</div>
+          <button class="modal-close" id="chartClose">fechar</button>
+        </div>
+        <div class="modal-body">
+          <canvas id="chartCanvas" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+
+    <footer>OneGroup • 2025</footer>
+  </div>
+
+
+  <script src="script.js"></script>
+</body>
+</html>

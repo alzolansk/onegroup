@@ -1,0 +1,727 @@
+/* ===========================
+   tema (tokens globais)
+   =========================== */
+
+/* padrão: dark */
+:root,
+:root.theme-dark {
+  /* cores base */
+  --bg: #0f1220;
+  --surface: #171b2e;
+  --muted: #9aa3b2;
+  --text: #e6e8ef;
+  --accent: #6c6ff9;
+  --green: #23d16b;
+  --red: #ff4d4f;
+  --outline: #232844;
+  --chip: #111525;
+  --chip-border: #263055;
+  --btn: #222845;
+  --btn-hover: #2a3154;
+
+  --surface-2:     #1a2040;
+  --outline:       rgba(255,255,255,.08);
+  --text:          #e6e8ef;
+  --text-muted:    #9aa3b2;
+
+  /* branding */
+  --brand:         #3a63ff;
+  --brand-2:       #2a4de6;
+
+  /* semânticas */
+  --positive:      #2ecc71;
+  --negative:      #ff4d4f;
+
+  /* componentes */
+  --chip-bg:       rgba(230,232,239,.08);
+  --chip-border:   rgba(255,255,255,.10);
+
+  --input-bg:      #12162a;
+  --input-border:  rgba(255,255,255,.12);
+  --input-focus:   #3a63ff;
+
+  --btn:           linear-gradient(180deg, #3a69ff, #384af7);
+  --btn-hover:     #2f54eb;
+
+  --glass:         rgba(30,35,60,.55);
+  --shadow:        0 12px 40px rgba(0,0,0,.35);
+
+  /* raios */
+  --radius-lg:     12px;
+  --radius-xl:     16px;
+
+  /* aliases para compat */
+  --green:         var(--positive);
+  --red:           var(--negative);
+  --muted:         var(--text-muted);
+
+  color-scheme: dark;
+}
+
+/* light mode */
+:root.theme-light {
+  --bg:            #eef1f6;          /* fundo neutro suave (não 100% branco) */
+  --surface:       #ffffff;          /* cards */
+  --surface-2:     #f6f7fb;          /* controles/pill/thead */
+  --outline:       rgba(15, 23, 42, .06);
+  --text:          #1f2937;          /* cinza-azulado (menos preto) */
+  --text-muted:    #6b7280;
+
+  --brand:         #2f54eb;          /* azul do branding */
+  --brand-2:       #2243db;
+
+  --positive:      #16a34a;
+  --negative:      #e11d48;
+
+  --chip-bg:       rgba(31,41,55,.07);
+  --chip-border:   rgba(15, 23, 42, .08);
+
+  --input-bg:      #ffffff;          /* inputs brancos... */
+  --input-border:  rgba(15, 23, 42, .10);
+  --input-focus:   #2f54eb;          /* ...mas foco azul suave */
+
+  --btn:           linear-gradient(180deg, #2f54eb, #2243db);
+  --btn-hover:     #2243db;
+
+  --glass:         rgba(255,255,255,.78); /* toasts/modal “glass” mais leitoso */
+  --shadow:        0 10px 28px rgba(2,6,23,.10); /* sombra mais curta e leve */
+
+  --radius-lg:     12px;
+  --radius-xl:     16px;
+
+  --green:         var(--positive);
+  --red:           var(--negative);
+  --muted:         var(--text-muted);
+
+  color-scheme: light;
+}
+
+
+/* base */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* reset */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* corpo */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  letter-spacing: .2px;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 20px 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* a tabela não cresce indefinidamente */
+.table {
+  flex: 0 0 auto;
+}
+
+/* header */
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #2d325a, #0b0e1a);
+  color: #fff !important;
+  border: 1px solid var(--outline);
+  box-shadow: var(--shadow);
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+
+h1 {
+  font-size: 36px;
+  margin: 0;
+  font-weight: 800;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.pill {
+  background: var(--surface-2);
+  border: 1px solid var(--outline);
+  color: color-mix(in oklab, var(--brand) 70%, #fff 0%);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.month-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.month-wrap input[type="month"] {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-weight: 600;
+  outline: none;
+}
+
+.grand-saldo {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--green);
+}
+
+/* resumo */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 18px;
+  margin-bottom: 22px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-xl);
+  padding: 18px 22px;
+  box-shadow: var(--shadow);
+}
+
+.card h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  letter-spacing: .4px;
+  color: var(--muted);
+}
+
+.money {
+  font-size: 30px;
+  font-weight: 900;
+}
+.money.green { color: var(--green); }
+.money.red   { color: var(--red); }
+
+/* painel nova movimentação */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-xl);
+  padding: 20px 18px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  margin: 0 0 16px 2px;
+  font-size: 22px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 170px 1fr 180px 200px 1fr 140px;
+  gap: 12px;
+}
+
+.row + .row {
+  margin-top: 12px;
+}
+
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 46px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-lg);
+  padding: 0 12px;
+}
+
+.control:focus-within {
+  outline: 2px solid color-mix(in oklab, var(--input-focus) 40%, transparent);
+}
+
+select,
+input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  outline: none;
+  font-size: 14px;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+/* botões */
+.btn {
+  height: 46px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, background .2s ease, filter .2s ease;
+  box-shadow: var(--shadow);
+}
+.btn:hover { filter: brightness(1.05); }
+.btn:active { transform: translateY(1px); }
+
+.btn.primary {
+  background: var(--btn);
+  border-color: color-mix(in oklab, var(--brand) 50%, transparent);
+  color: #fff;
+}
+.btn.primary:hover { background: var(--btn-hover); }
+
+/* filtros */
+.filters {
+  display: grid;
+  grid-template-columns: 200px 1fr 140px;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* tabela */
+.table {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.thead,
+.trow {
+  display: grid;
+  grid-template-columns: 150px 1fr 220px 140px 160px 160px;
+  gap: 10px;
+  align-items: center;
+}
+
+.thead {
+  padding: 12px 16px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.trow {
+  padding: 16px 16px;
+  border-top: 1px solid var(--outline);
+}
+
+.trow .value { font-weight: 800; }
+.value.negative { color: var(--red); }
+.value.positive { color: var(--green); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.actions { display: flex; gap: 8px; }
+
+.btn.small {
+  height: 38px;
+  padding: 0 14px;
+  font-weight: 700;
+  border: 1px solid var(--outline);
+  background: var(--surface-2);
+}
+.btn.small.red { background: color-mix(in oklab, var(--red) 20%, var(--surface) 80%); }
+
+/* select estilizado (campo) */
+.control.select:focus-within {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--input-focus) 28%, transparent);
+}
+
+.control.select select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 14px;
+  padding: 0 0 0 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* seta do select (usa mask pra herdar a cor do texto) */
+.control.select::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: .9;
+  background-color: var(--text);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+}
+
+/* opções do dropdown */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+select option:disabled {
+  color: color-mix(in oklab, var(--text) 55%, transparent);
+  font-style: italic;
+  background: var(--surface);
+}
+
+/* responsivo */
+@media (max-width: 980px) {
+  .grid { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; }
+  .filters { grid-template-columns: 1fr; }
+  .thead { display: none; }
+  .trow { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* rodapé */
+footer {
+  color: var(--text-muted);
+  margin: 20px 4px;
+  font-size: 12px;
+  text-align: right;
+}
+
+/* barra “ver todos” */
+#viewAllWrap {
+  display: none;
+  justify-content: flex-end;
+  margin: 10px 2px 0;
+}
+#viewAllBtn {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--outline);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+#viewAllBtn:hover { filter: brightness(1.06); }
+
+/* modal (limpo) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .55);
+  backdrop-filter: blur(2px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: min(980px, 90vw);
+  max-height: 84vh;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  border-bottom: 1px solid var(--outline);
+}
+
+.modal-title {
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+
+.modal-close {
+  border: 1px solid var(--outline);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  height: 34px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 10px 12px 14px;
+  overflow: auto;
+}
+
+/* tabela dentro do modal (compacta) */
+.modal .table { border-radius: 12px; }
+.modal .thead { padding: 10px 14px; font-size: 11px; letter-spacing: .4px; }
+.modal .trow  { padding: 12px 14px; border-top: 1px solid var(--outline); background: transparent; }
+.modal .trow:hover { background: color-mix(in oklab, var(--surface) 94%, transparent); }
+
+.modal .actions .btn.small { height: 32px; padding: 0 10px; border-radius: 10px; }
+
+/* scrollbar do modal */
+.modal-body::-webkit-scrollbar { width: 10px; }
+.modal-body::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--text-muted) 25%, transparent); border-radius: 10px; }
+.modal-body::-webkit-scrollbar-track { background: color-mix(in oklab, var(--surface) 85%, transparent); }
+
+/* grid mais elástico só no modal */
+.modal .thead,
+.modal .trow { grid-template-columns: 120px 1fr 170px 120px 150px 160px; }
+@media (max-width: 860px) {
+  .modal .thead,
+  .modal .trow { grid-template-columns: 110px 1fr 150px 110px 130px 140px; }
+}
+
+/* edição inline na tabela */
+.inline-control {
+  width: 100%;
+  height: 38px;
+  background: var(--input-bg);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  padding: 0 10px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+.inline-control.align-right { text-align: right; }
+.trow .inline-control:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--input-focus) 28%, transparent);
+}
+.trow select.inline-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+  padding-right: 28px;
+}
+
+/* toasts (glass grande, sem sombra) */
+#toaster {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+}
+.toast {
+  min-width: 320px;
+  max-width: 520px;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 15px;
+  display: grid;
+  grid-template-columns: 26px 1fr 24px;
+  align-items: center;
+  gap: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  color: var(--text);
+  border: none;
+  box-shadow: none;
+  animation: toast-in .25s ease-out;
+}
+.toast.success { background: linear-gradient(90deg, color-mix(in oklab, var(--green) 28%, transparent) 0%, var(--glass) 28%); }
+.toast.error   { background: linear-gradient(90deg, color-mix(in oklab, var(--red)   28%, transparent) 0%, var(--glass) 28%); }
+.toast.info    { background: linear-gradient(90deg, color-mix(in oklab, var(--brand) 28%, transparent) 0%, var(--glass) 28%); }
+.toast .icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in oklab, currentColor 20%, transparent);
+}
+.toast .close {
+  border: none; background: none; cursor: pointer; padding: 0;
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  opacity: .85; transition: opacity .2s;
+}
+.toast .close:hover { opacity: 1; }
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toast-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(8px); opacity: 0; } }
+
+/* espaça mais os cards e deixa sombras mais “macias” */
+.card,
+.panel,
+.table {
+  box-shadow: 0 8px 24px rgba(2,6,23,.08);
+  border-color: var(--outline);
+}
+
+/* inputs com leve cinza por trás pra não “gritar” */
+.control {
+  background: color-mix(in oklab, var(--surface) 88%, #000 0%);
+}
+.control:focus-within {
+  outline: 2px solid color-mix(in oklab, var(--brand) 24%, transparent);
+}
+
+/* thead mais clarinho */
+.thead {
+  background: color-mix(in oklab, var(--surface-2) 92%, transparent);
+  color: color-mix(in oklab, var(--text) 55%, transparent);
+}
+
+/* hover de linha sutil (sem cinza pesado) */
+.trow:hover {
+  background: color-mix(in oklab, var(--surface) 96%, var(--surface-2) 4%);
+}
+
+/* botões “normais” menos contrastantes */
+.btn {
+  background: color-mix(in oklab, var(--surface-2) 88%, var(--surface) 12%);
+  border-color: var(--outline);
+}
+.btn.small.red {
+  background: color-mix(in oklab, var(--red) 10%, var(--surface-2) 90%);
+}
+
+/* chips com contraste reduzido */
+.chip {
+  background: var(--chip-bg);
+  border-color: var(--chip-border);
+  color: color-mix(in oklab, var(--text) 80%, transparent);
+}
+
+/* toasts glass mais claro, sem sombra dura */
+.toast {
+  background: var(--glass);
+  box-shadow: none;
+}
+.toast.success {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--green) 20%, transparent) 0%,
+    var(--glass) 28%);
+}
+.toast.error {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--red) 20%, transparent) 0%,
+    var(--glass) 28%);
+}
+
+/* bordas dos cartões com leve “soft edge” */
+.card, .panel, .table { border-radius: 18px; }
+
+
+/* toggle tema */
+.theme-toggle {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--outline);
+  background: var(--surface-2);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.theme-toggle:hover { filter: brightness(1.05); }
+.theme-toggle .sun,
+.theme-toggle .moon { display: none; }
+:root.theme-dark .theme-toggle .moon { display: inline; }
+:root.theme-dark .theme-toggle { color: #f5f7ff; }
+:root.theme-light .theme-toggle .sun  { display: inline; }
+
+/* botão do card (gráfico) */
+.card {
+  position: relative;
+}
+.chart-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  height: 34px;
+  width: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--outline);
+  background: var(--surface-2);
+  color: var(--brand);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: filter .2s ease;
+}
+.chart-btn:hover { filter: brightness(1.06); }
+
+/* modal específico de gráficos */
+.chart-modal { width: min(760px, 92vw); }
+.chart-modal .modal-body { padding: 18px; }
+.chart-modal canvas { width: 100%; height: 320px; }
