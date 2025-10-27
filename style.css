@@ -199,6 +199,31 @@ h1 {
   border-radius: 999px;
 }
 
+.insights-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--brand) 22%, var(--outline) 78%);
+  background: color-mix(in oklab, var(--surface-2) 82%, var(--surface) 18%);
+  color: color-mix(in oklab, var(--brand) 70%, var(--text) 30%);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .2s ease, transform .12s ease, box-shadow .2s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+.insights-trigger svg { opacity: .85; }
+.insights-trigger:hover {
+  background: color-mix(in oklab, var(--brand) 16%, var(--surface) 84%);
+  transform: translateY(-1px);
+}
+.insights-trigger:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(0,0,0,.22);
+}
+
 .month-wrap input[type="month"] {
   background: transparent;
   border: none;
@@ -854,3 +879,249 @@ footer {
 .chart-modal { width: min(760px, 92vw); }
 .chart-modal .modal-body { padding: 18px; }
 .chart-modal canvas { width: 100%; height: 320px; }
+
+
+/* insights modal */
+.insights-modal {
+  width: min(1080px, 94vw);
+}
+
+.insights-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  padding: 0 6px 12px;
+}
+
+.insights-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.insight-card {
+  background: color-mix(in oklab, var(--surface-2) 85%, transparent);
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.18);
+}
+.insight-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.insight-label {
+  font-size: 12px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--text-muted) 72%, transparent);
+}
+.insight-action {
+  border: none;
+  background: none;
+  color: color-mix(in oklab, var(--brand) 88%, var(--text) 12%);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 999px;
+  transition: background .2s ease, color .2s ease;
+}
+.insight-action:hover {
+  background: color-mix(in oklab, var(--brand) 18%, transparent);
+  color: var(--text);
+}
+.insight-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+.insight-detail {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.insights-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.chart-block {
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  border: 1px solid var(--outline);
+  border-radius: 18px;
+  padding: 14px 16px 20px;
+  box-shadow: 0 14px 36px rgba(0,0,0,.16);
+}
+.chart-block-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.chart-block-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.chart-block-header small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.chart-block canvas {
+  width: 100% !important;
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.insights-list h3 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: .4px;
+}
+.insight-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.insight-list li {
+  background: color-mix(in oklab, var(--surface-2) 88%, transparent);
+  border: 1px solid var(--outline);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.14);
+}
+.insight-list li strong {
+  font-size: 14px;
+  color: var(--text);
+}
+.insight-list li span {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.insight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: color-mix(in oklab, var(--brand) 82%, var(--text) 18%);
+  background: color-mix(in oklab, var(--brand) 12%, transparent);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.daily-widget {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: clamp(220px, 26vw, 280px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  background: color-mix(in oklab, var(--surface) 96%, transparent);
+  border: 1px solid var(--outline);
+  border-radius: 18px;
+  box-shadow: 0 24px 48px rgba(0,0,0,.22);
+  z-index: 850;
+}
+.daily-widget-close {
+  align-self: flex-end;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+.daily-widget-title {
+  font-weight: 700;
+  letter-spacing: .4px;
+}
+.daily-widget-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.daily-widget-line strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.daily-widget-open {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--brand) 28%, var(--outline) 72%);
+  background: color-mix(in oklab, var(--brand) 18%, var(--surface) 82%);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 18px 32px rgba(0,0,0,.18);
+}
+.daily-widget-open:hover {
+  filter: brightness(1.04);
+}
+
+@media (max-width: 680px) {
+  .daily-widget {
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+  .daily-widget-open {
+    right: 16px;
+    left: auto;
+  }
+  .insights-charts {
+    grid-template-columns: 1fr;
+  }
+  .insights-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.insight-card.good {
+  border-color: color-mix(in oklab, var(--green) 40%, transparent);
+  box-shadow: 0 12px 28px rgba(34,197,94,.18);
+}
+.insight-card.alert {
+  border-color: color-mix(in oklab, var(--red) 45%, transparent);
+  box-shadow: 0 12px 28px rgba(248,113,113,.16);
+}
+
+.daily-widget-line strong.positive {
+  color: var(--green);
+}
+.daily-widget-line strong.negative {
+  color: var(--red);
+}

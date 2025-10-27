@@ -25,6 +25,26 @@ const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
 document.documentElement.classList.toggle('theme-light', savedTheme === 'light');
 document.documentElement.classList.toggle('theme-dark',  savedTheme !== 'light');
 
+const SETTINGS_KEY = 'og.settings.v1';
+const defaultSettings = { budget: 0, widgetCollapsed: false };
+let settings = { ...defaultSettings };
+try {
+  const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  if (savedSettings && typeof savedSettings === 'object') {
+    settings = { ...defaultSettings, ...savedSettings };
+  }
+} catch (err) {
+  console.warn('Falha ao carregar configuracoes, usando padrao.', err);
+  settings = { ...defaultSettings };
+}
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.warn('Nao foi possivel salvar configuracoes.', err);
+  }
+}
+
 // ===== Estado / Persistência =====
 const KEY = 'og.ledger.v1';
 let items;
@@ -94,9 +114,32 @@ const recurringModal   = document.getElementById('recurringModal');
 const recurringContent = document.getElementById('recurringContent');
 const recurringClose   = document.getElementById('recurringClose');
 const recurringConfirm = document.getElementById('recurringConfirm');
+const insightsBtn      = document.getElementById('insightsBtn');
+const insightsModal    = document.getElementById('insightsModal');
+const insightsClose    = document.getElementById('insightsClose');
+const budgetEdit       = document.getElementById('budgetEdit');
+const economyCard      = document.getElementById('economyCard');
+const economySummary   = document.getElementById('economySummary');
+const economyDetail    = document.getElementById('economyDetail');
+const dailyAverageValue  = document.getElementById('dailyAverageValue');
+const dailyAverageDetail = document.getElementById('dailyAverageDetail');
+const forecastValue    = document.getElementById('forecastValue');
+const forecastDetail   = document.getElementById('forecastDetail');
+const trendSubtitle    = document.getElementById('trendSubtitle');
+const categorySubtitle = document.getElementById('categorySubtitle');
+const insightListEl    = document.getElementById('insightList');
+const trendCanvasEl    = document.getElementById('trendChart');
+const categoryCanvasEl = document.getElementById('categoryChart');
+const dailyWidget      = document.getElementById('dailyWidget');
+const dailyWidgetClose = document.getElementById('dailyWidgetClose');
+const dailyWidgetOpen  = document.getElementById('dailyWidgetOpen');
+const dailySpendEl     = document.getElementById('dailySpend');
+const dailyRemainingEl = document.getElementById('dailyRemaining');
+const dailySpendLabel  = document.getElementById('dailySpendLabel');
 let recurringContext = null;
 let recurringLastFocus = null;
 
+let insightsLastFocus = null;
 // ===== Configs =====
 const MAX_ROWS = 3;
 
@@ -153,6 +196,36 @@ addBtn?.addEventListener('click', () => {
 
     render();
 });
+
+budgetEdit?.addEventListener('click', handleBudgetEdit);
+
+insightsBtn?.addEventListener('click', openInsightsModal);
+insightsClose?.addEventListener('click', closeInsightsModal);
+insightsModal?.addEventListener('click', (e) => { if (e.target === insightsModal) closeInsightsModal(); });
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && insightsModal?.style.display === 'flex') {
+    closeInsightsModal();
+  }
+});
+
+dailyWidgetClose?.addEventListener('click', () => {
+  settings.widgetCollapsed = true;
+  saveSettings();
+  applyWidgetState();
+  if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
+    dailyWidgetOpen.focus();
+  }
+});
+dailyWidgetOpen?.addEventListener('click', () => {
+  settings.widgetCollapsed = false;
+  saveSettings();
+  applyWidgetState();
+  if (dailyWidgetClose) {
+    dailyWidgetClose.focus();
+  }
+});
+
+applyWidgetState();
 
 // ===== Funções =====
 function bindRowActions(container) {
@@ -229,6 +302,32 @@ const chartTitle  = document.getElementById('chartTitle');
 const chartCanvas = document.getElementById('chartCanvas').getContext('2d');
 
 let chartInstance = null;
+
+const trendCanvasCtx    = trendCanvasEl && typeof trendCanvasEl.getContext === 'function' ? trendCanvasEl.getContext('2d') : null;
+const categoryCanvasCtx = categoryCanvasEl && typeof categoryCanvasEl.getContext === 'function' ? categoryCanvasEl.getContext('2d') : null;
+
+let trendChartInstance = null;
+let categoryChartInstance = null;
+let insightsChartsDirty = true;
+
+const analyticsState = {
+  monthKey: '',
+  monthReceitas: 0,
+  monthDespesas: 0,
+  monthSaldo: 0,
+  progressRatio: 1,
+  averageValor: 0,
+  averageDetail: '',
+  forecastValor: 0,
+  forecastDetail: '',
+  categories: [],
+  series: [],
+  insights: [],
+  trendSubtitle: '',
+  categorySubtitle: ''
+};
+
+const triggeredAlerts = new Set();
 
 // paleta por categoria (fixa pra ficar consistente)
 const CAT_COLORS = {
@@ -330,6 +429,572 @@ viewAllBtn?.addEventListener('click', openModal);
 closeModalBtn?.addEventListener('click', closeModal);
 listModal?.addEventListener('click', (e) => { if (e.target === listModal) closeModal(); });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+function parseMonthKey(monthKey) {
+  if (!monthKey) return null;
+  const parts = String(monthKey).split('-');
+  if (parts.length !== 2) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  if (!year || !month) return null;
+  return { year, month };
+}
+
+function formatMonthLabel(monthKey, style = 'long') {
+  const parts = parseMonthKey(monthKey);
+  if (!parts) return monthKey || '';
+  const date = new Date(parts.year, parts.month - 1, 1);
+  if (Number.isNaN(date.getTime())) return monthKey;
+  const options = style === 'short'
+    ? { month: 'short', year: '2-digit' }
+    : { month: 'long', year: 'numeric' };
+  let label = date.toLocaleString('pt-BR', options);
+  if (!label) return monthKey;
+  label = label.charAt(0).toUpperCase() + label.slice(1);
+  return label;
+}
+
+function buildMonthlySnapshot() {
+  const map = new Map();
+  for (const entry of items) {
+    if (!entry?.data) continue;
+    const monthKey = onlyMonth(entry.data);
+    if (!monthKey) continue;
+    if (!map.has(monthKey)) {
+      map.set(monthKey, {
+        receitas: 0,
+        despesas: 0,
+        saldo: 0,
+        categorias: new Map()
+      });
+    }
+    const bucket = map.get(monthKey);
+    if (entry.tipo === 'receita') {
+      bucket.receitas += entry.valor;
+    } else if (entry.tipo === 'despesa') {
+      bucket.despesas += entry.valor;
+      const cat = entry.categoria || 'outros';
+      bucket.categorias.set(cat, (bucket.categorias.get(cat) || 0) + entry.valor);
+    }
+    bucket.saldo = bucket.receitas - bucket.despesas;
+  }
+  return map;
+}
+
+function computeDailyAverageInfo(monthKey, totalDespesas) {
+  const parts = parseMonthKey(monthKey);
+  if (!parts) {
+    return {
+      value: 0,
+      detail: 'Selecione um mes valido.',
+      daysElapsed: 0,
+      daysInMonth: 0,
+      isCurrent: false,
+      progress: 1
+    };
+  }
+  const { year, month } = parts;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+  const isCurrent = today.getFullYear() === year && (today.getMonth() + 1) === month;
+  const daysElapsed = isCurrent ? Math.max(1, Math.min(today.getDate(), daysInMonth)) : daysInMonth;
+  const average = totalDespesas / Math.max(1, daysElapsed);
+  const detail = isCurrent
+    ? `Ritmo ate o dia ${String(daysElapsed).padStart(2, '0')} de ${daysInMonth}.`
+    : `Media distribuida pelos ${daysInMonth} dias do mes.`;
+  return {
+    value: average,
+    detail,
+    daysElapsed,
+    daysInMonth,
+    isCurrent,
+    progress: daysInMonth ? (daysElapsed / daysInMonth) : 1
+  };
+}
+
+function computeForecastInfo(monthKey, totalDespesas, monthlyMap, averageInfo) {
+  const monthsSorted = Array.from(monthlyMap.keys()).sort();
+  const currentIndex = monthsSorted.indexOf(monthKey);
+  const prevKeys = currentIndex > 0 ? monthsSorted.slice(Math.max(0, currentIndex - 3), currentIndex) : [];
+  const prevValues = prevKeys.map(key => Math.max(0, monthlyMap.get(key)?.despesas || 0));
+  const avgPrev = prevValues.length ? prevValues.reduce((acc, val) => acc + val, 0) / prevValues.length : 0;
+  let forecast = totalDespesas;
+  let detail = 'Sem historico suficiente para prever.';
+  const progress = averageInfo?.progress ?? 1;
+  const isCurrent = averageInfo?.isCurrent;
+
+  if (isCurrent && progress < 0.99) {
+    const paceProjection = progress > 0 ? totalDespesas / Math.max(progress, 0.1) : totalDespesas;
+    if (avgPrev > 0) {
+      forecast = (paceProjection * 0.6) + (avgPrev * 0.4);
+      detail = `Media ponderada do ritmo atual com os ultimos ${prevValues.length} meses.`;
+    } else {
+      forecast = paceProjection;
+      detail = 'Estimativa baseada no ritmo do mes atual.';
+    }
+  } else if (avgPrev > 0) {
+    forecast = avgPrev;
+    detail = `Media simples dos ultimos ${prevValues.length} meses.`;
+  }
+
+  forecast = Math.max(forecast, totalDespesas);
+  return {
+    value: forecast,
+    detail,
+    prevKeys,
+    avgPrev
+  };
+}
+
+function updateInsightList(list) {
+  if (!insightListEl) return;
+  insightListEl.innerHTML = '';
+  if (!Array.isArray(list) || !list.length) {
+    const li = document.createElement('li');
+    li.innerHTML = '<strong>Nenhum insight ainda</strong><span>Adicione movimentacoes ou defina metas para habilitar as sugestoes.</span>';
+    insightListEl.appendChild(li);
+    return;
+  }
+  list.forEach(item => {
+    const li = document.createElement('li');
+    if (item.tag) {
+      const tag = document.createElement('span');
+      tag.className = 'insight-tag';
+      tag.textContent = item.tag;
+      li.appendChild(tag);
+    }
+    if (item.title) {
+      const title = document.createElement('strong');
+      title.textContent = item.title;
+      li.appendChild(title);
+    }
+    if (item.detail) {
+      const detail = document.createElement('span');
+      detail.textContent = item.detail;
+      li.appendChild(detail);
+    }
+    insightListEl.appendChild(li);
+  });
+}
+
+function emitCategoryAlerts(monthKey, categoriasMap, totalDespesas) {
+  if (!categoriasMap || !categoriasMap.size || !totalDespesas) return;
+  categoriasMap.forEach((valor, cat) => {
+    if (!valor) return;
+    const share = valor / totalDespesas;
+    if (share >= 0.6) {
+      const id = `cat:${monthKey}:${cat}`;
+      if (triggeredAlerts.has(id)) return;
+      triggeredAlerts.add(id);
+      const pct = Math.round(share * 100);
+      toast(`A categoria ${cat} responde por ${pct}% das despesas do mes.`, 'error', 5000);
+    }
+  });
+}
+
+function emitBudgetAlert(monthKey, totalDespesas, budget) {
+  if (!budget || totalDespesas <= budget) return;
+  const id = `budget:${monthKey}`;
+  if (triggeredAlerts.has(id)) return;
+  triggeredAlerts.add(id);
+  const diff = totalDespesas - budget;
+  toast(`Meta de gastos ultrapassada em ${fmtMoney(diff)}.`, 'error', 5000);
+}
+
+function updateEconomyCardDisplay(budget, totalDespesas) {
+  if (!economySummary || !economyDetail || !economyCard) return;
+  economyCard.classList.remove('good', 'alert');
+  if (budget > 0) {
+    const diff = budget - totalDespesas;
+    const prefix = diff >= 0 ? '+' : '-';
+    economySummary.textContent = `${prefix} ${fmtMoney(Math.abs(diff))}`;
+    if (diff >= 0) {
+      economyDetail.textContent = `Voce ainda pode gastar ${fmtMoney(diff)} dentro da meta de ${fmtMoney(budget)}.`;
+      economyCard.classList.add('good');
+    } else {
+      economyDetail.textContent = `Voce ultrapassou a meta em ${fmtMoney(Math.abs(diff))}.`;
+      economyCard.classList.add('alert');
+    }
+  } else {
+    economySummary.textContent = '--';
+    economyDetail.textContent = 'Defina uma meta mensal para acompanhar sua economia.';
+  }
+}
+
+function updateDailyWidget(monthKey, monthItems, bucket, budget) {
+  if (!dailyWidget || !dailySpendEl || !dailyRemainingEl) return;
+  const parts = parseMonthKey(monthKey);
+  if (!parts) {
+    if (dailySpendLabel) dailySpendLabel.textContent = 'Gasto do dia';
+    dailySpendEl.textContent = '--';
+    dailyRemainingEl.textContent = '--';
+    return;
+  }
+  const { year, month } = parts;
+  const today = new Date();
+  let referenceISO = null;
+  let label = 'Gasto do dia';
+  const currentMonth = today.getFullYear() === year && (today.getMonth() + 1) === month;
+
+  if (currentMonth) {
+    referenceISO = `${monthKey}-${pad(today.getDate())}`;
+    label = 'Gasto de hoje';
+  } else {
+    const latest = monthItems
+      .filter(entry => entry?.tipo === 'despesa' && entry?.data)
+      .map(entry => entry.data)
+      .sort()
+      .pop();
+    if (latest) {
+      referenceISO = latest;
+      const dateObj = new Date(`${latest}T00:00:00`);
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      label = `Gasto do dia ${dd}/${mm}`;
+    } else {
+      label = 'Sem despesas registradas';
+    }
+  }
+
+  const dailyTotal = referenceISO
+    ? monthItems.filter(entry => entry.tipo === 'despesa' && entry.data === referenceISO)
+        .reduce((total, entry) => total + (entry?.valor || 0), 0)
+    : 0;
+
+  if (dailySpendLabel) dailySpendLabel.textContent = label;
+  dailySpendEl.textContent = fmtMoney(dailyTotal);
+
+  const baseSaldo = bucket?.saldo ?? 0;
+  const restante = budget > 0 ? (budget - (bucket?.despesas || 0)) : baseSaldo;
+  dailyRemainingEl.textContent = fmtMoney(restante);
+  dailyRemainingEl.classList.toggle('positive', restante >= 0);
+  dailyRemainingEl.classList.toggle('negative', restante < 0);
+}
+
+function generateInsights(monthKey, monthlyMap, bucket, forecastInfo, budget) {
+  const output = [];
+  const monthsSorted = Array.from(monthlyMap.keys()).sort();
+  const idx = monthsSorted.indexOf(monthKey);
+  const prevKey = idx > 0 ? monthsSorted[idx - 1] : null;
+  const prevBucket = prevKey ? monthlyMap.get(prevKey) : null;
+
+  if (bucket && prevBucket) {
+    let topCat = null;
+    bucket.categorias.forEach((valor, cat) => {
+      const prevValor = prevBucket.categorias?.get?.(cat) || 0;
+      const diff = valor - prevValor;
+      if (diff <= 0) return;
+      const pct = prevValor > 0 ? diff / prevValor : null;
+      const score = pct !== null ? pct : diff / Math.max(valor, 1);
+      if (!topCat || score > topCat.score) {
+        topCat = { cat, valor, prevValor, diff, pct, score };
+      }
+    });
+    if (topCat && (topCat.diff >= 100 || (topCat.pct !== null && topCat.pct >= 0.15))) {
+      const pctTxt = topCat.pct !== null ? `${Math.round(topCat.pct * 100)}%` : 'novos gastos';
+      output.push({
+        tag: 'crescimento',
+        title: `Categoria em alta: ${topCat.cat}`,
+        detail: `Despesas em ${topCat.cat} somam ${fmtMoney(topCat.valor)} contra ${fmtMoney(topCat.prevValor)} em ${formatMonthLabel(prevKey, 'short')} (${pctTxt}).`
+      });
+    }
+  }
+
+  if (typeof budget === 'number' && budget > 0 && bucket) {
+    const diff = budget - bucket.despesas;
+    if (diff >= 0) {
+      output.push({
+        tag: 'meta',
+        title: 'Meta controlada',
+        detail: `Voce ainda tem ${fmtMoney(diff)} antes de atingir a meta de ${fmtMoney(budget)}.`
+      });
+    } else {
+      output.push({
+        tag: 'meta',
+        title: 'Meta ultrapassada',
+        detail: `O mes excedeu a meta em ${fmtMoney(Math.abs(diff))}. Reavalie as despesas mais pesadas.`
+      });
+    }
+  }
+
+  if (forecastInfo && budget > 0) {
+    const diffPrev = forecastInfo.value - budget;
+    if (diffPrev > budget * 0.1) {
+      output.push({
+        tag: 'previsao',
+        title: 'Risco de extrapolar meta',
+        detail: `A previsao indica ${fmtMoney(forecastInfo.value)}, acima da meta de ${fmtMoney(budget)}.`
+      });
+    }
+  }
+
+  if (bucket) {
+    if (bucket.saldo < 0) {
+      output.push({
+        tag: 'saldo',
+        title: 'Saldo negativo',
+        detail: `O saldo do mes esta negativo em ${fmtMoney(Math.abs(bucket.saldo))}.`
+      });
+    } else if (bucket.saldo > 0) {
+      output.push({
+        tag: 'saldo',
+        title: 'Saldo positivo',
+        detail: `Voce acumulou saldo de ${fmtMoney(bucket.saldo)} no mes.`
+      });
+    }
+  }
+
+  return output;
+}
+
+function refreshAnalytics(monthKey, monthItems) {
+  analyticsState.monthKey = monthKey;
+  const monthlyMap = buildMonthlySnapshot();
+  const bucket = monthlyMap.get(monthKey) || {
+    receitas: 0,
+    despesas: 0,
+    saldo: 0,
+    categorias: new Map()
+  };
+
+  analyticsState.monthReceitas = bucket.receitas;
+  analyticsState.monthDespesas = bucket.despesas;
+  analyticsState.monthSaldo = bucket.saldo;
+
+  updateEconomyCardDisplay(Number(settings.budget) || 0, bucket.despesas);
+
+  const averageInfo = computeDailyAverageInfo(monthKey, bucket.despesas);
+  analyticsState.averageValor = averageInfo.value;
+  analyticsState.averageDetail = averageInfo.detail;
+  if (dailyAverageValue) dailyAverageValue.textContent = fmtMoney(averageInfo.value);
+  if (dailyAverageDetail) dailyAverageDetail.textContent = averageInfo.detail;
+
+  const forecastInfo = computeForecastInfo(monthKey, bucket.despesas, monthlyMap, averageInfo);
+  analyticsState.forecastValor = forecastInfo.value;
+  analyticsState.forecastDetail = forecastInfo.detail;
+  if (forecastValue) forecastValue.textContent = fmtMoney(forecastInfo.value);
+  if (forecastDetail) forecastDetail.textContent = forecastInfo.detail;
+
+  const categoriesArray = Array.from(bucket.categorias.entries()).sort((a, b) => b[1] - a[1]);
+  analyticsState.categories = categoriesArray;
+  const categorySubtitleText = categoriesArray.length
+    ? `Mes: ${formatMonthLabel(monthKey)}`
+    : 'Sem despesas registradas para este mes.';
+  analyticsState.categorySubtitle = categorySubtitleText;
+  if (categorySubtitle) categorySubtitle.textContent = categorySubtitleText;
+
+  const monthsSorted = Array.from(monthlyMap.keys()).sort();
+  const lastMonths = monthsSorted.slice(-6);
+  analyticsState.series = lastMonths.map(key => {
+    const data = monthlyMap.get(key);
+    return { key, receitas: data?.receitas || 0, despesas: data?.despesas || 0 };
+  });
+  const trendText = lastMonths.length
+    ? `Periodo: ${formatMonthLabel(lastMonths[0])} a ${formatMonthLabel(lastMonths[lastMonths.length - 1])}`
+    : 'Sem dados suficientes.';
+  analyticsState.trendSubtitle = trendText;
+  if (trendSubtitle) trendSubtitle.textContent = trendText;
+
+  const insights = generateInsights(monthKey, monthlyMap, bucket, forecastInfo, Number(settings.budget) || 0);
+  analyticsState.insights = insights;
+  updateInsightList(insights);
+
+  emitCategoryAlerts(monthKey, bucket.categorias, bucket.despesas);
+  emitBudgetAlert(monthKey, bucket.despesas, Number(settings.budget) || 0);
+  updateDailyWidget(monthKey, monthItems, bucket, Number(settings.budget) || 0);
+
+  insightsChartsDirty = true;
+  if (insightsModal?.style.display === 'flex') {
+    renderInsightsCharts();
+    insightsChartsDirty = false;
+  }
+}
+
+function renderInsightsCharts() {
+  if (typeof Chart === 'undefined') return;
+
+  if (trendChartInstance) {
+    trendChartInstance.destroy();
+    trendChartInstance = null;
+  }
+  if (categoryChartInstance) {
+    categoryChartInstance.destroy();
+    categoryChartInstance = null;
+  }
+
+  if (trendCanvasCtx && analyticsState.series.length) {
+    const labels = analyticsState.series.map(s => formatMonthLabel(s.key, 'short'));
+    const receitasData = analyticsState.series.map(s => s.receitas);
+    const despesasData = analyticsState.series.map(s => s.despesas);
+    const maxSerie = Math.max(
+      ...receitasData.filter(Number.isFinite),
+      ...despesasData.filter(Number.isFinite),
+      0
+    );
+    const suggestedMax = maxSerie > 0 ? maxSerie * 1.1 : undefined;
+
+    trendChartInstance = new Chart(trendCanvasCtx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Receitas',
+            data: receitasData,
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34,197,94,0.15)',
+            tension: 0.32,
+            fill: false,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Despesas',
+            data: despesasData,
+            borderColor: '#f87171',
+            backgroundColor: 'rgba(248,113,113,0.2)',
+            tension: 0.32,
+            fill: false,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            min: 0,
+            suggestedMax,
+            ticks: {
+              callback: (value) => fmtMoney(value)
+            },
+            grid: {
+              color: 'rgba(148,163,184,0.12)'
+            }
+          },
+          x: {
+            grid: { display: false }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: getComputedStyle(document.documentElement).getPropertyValue('--text') || '#e6e8ef'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${fmtMoney(ctx.raw)}`
+            }
+          }
+        }
+      }
+    });
+  } else if (trendCanvasCtx) {
+    trendCanvasCtx.clearRect(0, 0, trendCanvasCtx.canvas.width, trendCanvasCtx.canvas.height);
+  }
+
+  if (categoryCanvasCtx && analyticsState.categories.length) {
+    const top = analyticsState.categories.slice(0, 6);
+    const labels = top.map(([cat]) => cat);
+    const values = top.map(([_, val]) => val);
+    const colors = labels.map(cat => (CAT_COLORS[cat] || '#64748b'));
+    const maxValue = Math.max(...values.filter(Number.isFinite), 0);
+    const suggestedMax = maxValue > 0 ? maxValue * 1.1 : undefined;
+
+    categoryChartInstance = new Chart(categoryCanvasCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Despesas',
+          data: values,
+          backgroundColor: colors.map(c => `${c}dd`),
+          borderRadius: 10,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            min: 0,
+            suggestedMax,
+            ticks: {
+              callback: (value) => fmtMoney(value)
+            },
+            grid: { color: 'rgba(148,163,184,0.12)' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              color: getComputedStyle(document.documentElement).getPropertyValue('--text') || '#e6e8ef'
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => fmtMoney(ctx.raw)
+            }
+          }
+        }
+      }
+    });
+  } else if (categoryCanvasCtx) {
+    categoryCanvasCtx.clearRect(0, 0, categoryCanvasCtx.canvas.width, categoryCanvasCtx.canvas.height);
+  }
+}
+
+function handleBudgetEdit() {
+  if (!budgetEdit) return;
+  const current = settings.budget ? settings.budget.toFixed(2).replace('.', ',') : '';
+  const value = prompt('Qual a meta mensal de gastos? (em R$)', current);
+  if (value === null) return;
+  const parsed = parseMoney(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    alert('Valor invalido para meta.');
+    return;
+  }
+  settings.budget = parsed;
+  saveSettings();
+  toast(parsed ? 'Meta atualizada!' : 'Meta removida.', 'success');
+  const currentMonth = monthPicker?.value;
+  if (currentMonth) {
+    triggeredAlerts.delete(`budget:${currentMonth}`);
+  }
+  render();
+}
+
+function applyWidgetState() {
+  if (!dailyWidget || !dailyWidgetOpen) return;
+  const collapsed = !!settings.widgetCollapsed;
+  dailyWidget.hidden = collapsed;
+  dailyWidgetOpen.hidden = !collapsed;
+}
+
+function openInsightsModal() {
+  if (!insightsModal) return;
+  insightsLastFocus = document.activeElement;
+  insightsModal.style.display = 'flex';
+  insightsChartsDirty = true;
+  renderInsightsCharts();
+  insightsChartsDirty = false;
+  setTimeout(() => insightsClose?.focus(), 0);
+}
+
+function closeInsightsModal() {
+  if (!insightsModal) return;
+  insightsModal.style.display = 'none';
+  if (insightsLastFocus && typeof insightsLastFocus.focus === 'function') {
+    insightsLastFocus.focus();
+  }
+}
 
 // ===== Render =====
 function render() {
@@ -517,6 +1182,8 @@ function render() {
   }
 
   // ligar ações nos dois lugares
+  refreshAnalytics(month, monthItems);
+
   bindRowActions(tbody);
   bindRowActions(modalTbody);
 }

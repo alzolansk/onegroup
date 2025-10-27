@@ -30,6 +30,12 @@
         <div class="month-wrap">
           <input type="month" id="monthPicker"/>
         </div>
+        <button class="insights-trigger" id="insightsBtn" title="Ver insights e previsoes" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M12 2a7 7 0 0 0-4 12.73V18a2 2 0 0 0 4 0v-3.27A7 7 0 0 0 12 2Zm0 18a1 1 0 0 1-1-1h2a1 1 0 0 1-1 1Zm-1-3v-1h2v1Zm0-3.18V13h2v.82a5 5 0 1 0-2 0Z" fill="currentColor"/>
+          </svg>
+          <span>insights</span>
+        </button>
       </div>
     </header>
 
@@ -171,6 +177,64 @@
       </div>
     </div>
 
+    <!-- modal insights -->
+    <div class="modal-overlay" id="insightsModal" role="dialog" aria-modal="true" aria-labelledby="insightsTitle">
+      <div class="modal insights-modal">
+        <div class="modal-header">
+          <div class="modal-title" id="insightsTitle">Insights e previsoes</div>
+          <button class="modal-close" id="insightsClose">fechar</button>
+        </div>
+        <div class="modal-body insights-body">
+          <section class="insights-cards" aria-label="indicadores rapidos">
+            <article class="insight-card" id="economyCard">
+              <header>
+                <span class="insight-label">Meta de gastos</span>
+                <button id="budgetEdit" class="insight-action" type="button">ajustar</button>
+              </header>
+              <div class="insight-value" id="economySummary">--</div>
+              <p class="insight-detail" id="economyDetail">Defina uma meta mensal para acompanhar sua economia.</p>
+            </article>
+            <article class="insight-card">
+              <header>
+                <span class="insight-label">Media diaria</span>
+              </header>
+              <div class="insight-value" id="dailyAverageValue">--</div>
+              <p class="insight-detail" id="dailyAverageDetail">Calculo baseado nas despesas do mes selecionado.</p>
+            </article>
+            <article class="insight-card">
+              <header>
+                <span class="insight-label">Previsao de gastos</span>
+              </header>
+              <div class="insight-value" id="forecastValue">--</div>
+              <p class="insight-detail" id="forecastDetail">Analise os ultimos meses para estimar este ciclo.</p>
+            </article>
+          </section>
+
+          <section class="insights-charts" aria-label="graficos comparativos">
+            <div class="chart-block">
+              <header class="chart-block-header">
+                <h3>Receitas x despesas (6 meses)</h3>
+                <small id="trendSubtitle">Sem dados suficientes.</small>
+              </header>
+              <canvas id="trendChart" height="180"></canvas>
+            </div>
+            <div class="chart-block">
+              <header class="chart-block-header">
+                <h3>Ranking de categorias</h3>
+                <small id="categorySubtitle">Despesas por categoria do mes atual.</small>
+              </header>
+              <canvas id="categoryChart" height="220"></canvas>
+            </div>
+          </section>
+
+          <section class="insights-list" aria-label="insights automaticos">
+            <h3>Insights automaticos</h3>
+            <ul id="insightList" class="insight-list"></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-overlay" id="recurringModal" role="dialog" aria-modal="true" aria-labelledby="recurringTitle">
       <div class="modal repeat-modal">
         <div class="modal-header">
@@ -190,6 +254,20 @@
     <footer>OneGroup • 2025</footer>
   </div>
 
+
+  <div id="dailyWidget" class="daily-widget" aria-live="polite">
+    <button id="dailyWidgetClose" class="daily-widget-close" aria-label="Minimizar resumo diario">&times;</button>
+    <div class="daily-widget-title">Resumo diario</div>
+    <div class="daily-widget-line">
+      <span id="dailySpendLabel">Gasto de hoje</span>
+      <strong id="dailySpend">--</strong>
+    </div>
+    <div class="daily-widget-line">
+      <span>Saldo restante</span>
+      <strong id="dailyRemaining">--</strong>
+    </div>
+  </div>
+  <button id="dailyWidgetOpen" class="daily-widget-open" aria-label="Mostrar resumo diario" hidden>Resumo diario</button>
 
   <script src="script.js"></script>
 </body>
