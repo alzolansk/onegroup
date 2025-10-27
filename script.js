@@ -12,6 +12,12 @@ const parseMoney = (s) => {
 };
 const pad = (n) => String(n).padStart(2, '0');
 const onlyMonth = (iso) => iso?.slice(0, 7); // YYYY-MM
+const normalizeText = (value = '') => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim();
 
 // tema inicial (localStorage)
 const THEME_KEY = 'og.theme';
@@ -21,10 +27,32 @@ document.documentElement.classList.toggle('theme-dark',  savedTheme !== 'light')
 
 // ===== Estado / Persistência =====
 const KEY = 'og.ledger.v1';
-let items = JSON.parse(localStorage.getItem(KEY) || '[]');
+let items;
+let storageReset = false;
+const rawItems = localStorage.getItem(KEY);
+try {
+  items = JSON.parse(rawItems || '[]');
+} catch (err) {
+  console.warn('Storage corrompido, reiniciando lista.', err);
+  if (rawItems !== null) {
+    localStorage.setItem(`${KEY}.backup`, rawItems);
+  }
+  items = [];
+  storageReset = true;
+  localStorage.setItem(KEY, JSON.stringify(items));
+}
+if (!Array.isArray(items)) {
+  console.warn('Formato inesperado em localStorage. Resetando dados.');
+  if (rawItems !== null) {
+    localStorage.setItem(`${KEY}.backup`, rawItems);
+  }
+  items = [];
+  storageReset = true;
+  localStorage.setItem(KEY, JSON.stringify(items));
+}
 
 // cria demo se vazio
-if (!items.length) {
+if (!items.length && !storageReset) {
   const now = new Date();
   const y = now.getFullYear();
   const m = pad(now.getMonth() + 1);
@@ -62,6 +90,12 @@ const viewAllBtn    = document.getElementById('viewAllBtn');
 const listModal     = document.getElementById('listModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const modalTbody    = document.getElementById('modalTbody');
+const recurringModal   = document.getElementById('recurringModal');
+const recurringContent = document.getElementById('recurringContent');
+const recurringClose   = document.getElementById('recurringClose');
+const recurringConfirm = document.getElementById('recurringConfirm');
+let recurringContext = null;
+let recurringLastFocus = null;
 
 // ===== Configs =====
 const MAX_ROWS = 3;
@@ -102,9 +136,14 @@ addBtn?.addEventListener('click', () => {
     if (!c) return alert('Selecione a categoria.');
     if (!v || v <= 0) return alert('Informe um valor válido.');
 
-    items.unshift({ id: crypto.randomUUID(), tipo: t, data: d, categoria: c, descricao: desc, valor: v });
+    const newItem = { id: crypto.randomUUID(), tipo: t, data: d, categoria: c, descricao: desc, valor: v };
+    items.unshift(newItem);
     localStorage.setItem(KEY, JSON.stringify(items));
-    toast('Movimentação adicionada!', 'success');
+
+    const suggested = suggestRecurring(newItem);
+    if (!suggested) {
+      toast('Movimentação adicionada!', 'success');
+    }
 
     tipo.value = '';
     descricao.value = '';
@@ -316,16 +355,18 @@ function render() {
   sumReceitas.textContent = fmtMoney(receitas);
   sumDespesas.textContent = fmtMoney(despesas);
   sumSaldo.textContent = fmtMoney(saldo);
-  grandSaldo.textContent = fmtMoney(saldo);
+  if (grandSaldo) {
+    grandSaldo.textContent = fmtMoney(saldo);
+  }
 
   sumSaldo.classList.remove('green', 'red');
-  grandSaldo.classList.remove('green', 'red');
+  grandSaldo?.classList.remove('green', 'red');
   if (saldo >= 0) {
     sumSaldo.classList.add('green');
-    grandSaldo.classList.add('green');
+    grandSaldo?.classList.add('green');
   } else {
     sumSaldo.classList.add('red');
-    grandSaldo.classList.add('red');
+    grandSaldo?.classList.add('red');
   }
 
   // limpa tabela principal
@@ -480,12 +521,19 @@ function render() {
   bindRowActions(modalTbody);
 }
 
-function toast(message, type = 'info', ms = 3000) {
+function toast(message, type = 'info', ms = 3000, opts = {}) {
     const host = document.getElementById('toaster');
     if (!host) return;
 
+    const config = opts || {};
+    const autoClose = typeof config.duration === 'number' ? config.duration : ms;
+
     const el = document.createElement('div');
     el.className = `toast ${type}`;
+    const actionMarkup = config.action?.label
+      ? `<button class="toast-action" type="button">${config.action.label}</button>`
+      : '';
+
     el.innerHTML = `
     <div class="icon">
         ${
@@ -496,7 +544,10 @@ function toast(message, type = 'info', ms = 3000) {
             : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3a63ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16" r="1.2"/></svg>`
         }
     </div>
-    <div class="msg">${message}</div>
+    <div class="msg">
+      <span>${message}</span>
+      ${actionMarkup}
+    </div>
     <button class="close" aria-label="fechar">
         <svg viewBox="0 0 24 24" width="20" height="20">
         <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -505,21 +556,265 @@ function toast(message, type = 'info', ms = 3000) {
     </button>
     `;
 
+    const closeBtn = el.querySelector('.close');
+    const actionBtn = el.querySelector('.toast-action');
+    let timer = null;
+    let dismissed = false;
 
-    // fechar manual
-    el.querySelector('.close').addEventListener('click', () => dismiss(el));
-    // fechar automático
-    const timer = setTimeout(() => dismiss(el), ms);
-
-    // remover com animação
     function dismiss(node) {
-        clearTimeout(timer);
+        if (dismissed) return;
+        dismissed = true;
+        if (timer) clearTimeout(timer);
         node.style.animation = 'toast-out .2s ease-in forwards';
         node.addEventListener('animationend', () => node.remove(), { once: true });
     }
 
+    closeBtn?.addEventListener('click', () => dismiss(el));
+    actionBtn?.addEventListener('click', () => {
+        if (typeof config.action?.onClick === 'function') {
+            config.action.onClick();
+        }
+        dismiss(el);
+    });
+
+    if (autoClose > 0) {
+        timer = setTimeout(() => dismiss(el), autoClose);
+    }
+
     host.appendChild(el);
 }
+
+function collectRecurringMonths(item, horizon = 6) {
+  if (!item?.data) return [];
+
+  const descKey = normalizeText(item.descricao);
+  if (!descKey) return [];
+
+  const baseDate = new Date(item.data + 'T00:00:00');
+  if (Number.isNaN(baseDate.getTime())) return [];
+
+  const baseDay = baseDate.getDate();
+  const sameType = item.tipo;
+  const options = [];
+
+  for (let offset = 1; offset <= horizon; offset += 1) {
+    const future = new Date(baseDate);
+    future.setDate(1);
+    future.setMonth(future.getMonth() + offset);
+
+    const year = future.getFullYear();
+    const month = future.getMonth();
+    const monthKey = `${year}-${pad(month + 1)}`;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(baseDay, daysInMonth);
+    const isoDate = `${monthKey}-${pad(day)}`;
+
+    const exists = items.some(entry => {
+      if (!entry) return false;
+      if (entry.tipo !== sameType) return false;
+      if (!entry.descricao) return false;
+      if (normalizeText(entry.descricao) !== descKey) return false;
+      return onlyMonth(entry.data) === monthKey;
+    });
+
+    const labelRaw = future.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    const label = labelRaw ? labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1) : monthKey;
+
+    options.push({
+      monthKey,
+      date: isoDate,
+      label,
+      disabled: exists,
+      reason: exists ? 'Ja existe lancamento semelhante neste mes' : ''
+    });
+  }
+
+  return options;
+}
+
+function renderRecurringModal() {
+  if (!recurringContent) return;
+
+  recurringContent.innerHTML = '';
+
+  if (!recurringContext) {
+    recurringContent.innerHTML = '<p class="repeat-empty">Selecione uma movimentacao para continuar.</p>';
+    recurringConfirm?.setAttribute('disabled', 'disabled');
+    return;
+  }
+
+  const months = collectRecurringMonths(recurringContext);
+  if (!months.length) {
+    recurringContent.innerHTML = '<p class="repeat-empty">Nao ha meses futuros disponiveis.</p>';
+    recurringConfirm?.setAttribute('disabled', 'disabled');
+    return;
+  }
+
+  let hasSelectable = false;
+
+  months.forEach(opt => {
+    const label = document.createElement('label');
+    label.className = `repeat-option${opt.disabled ? ' disabled' : ''}`;
+
+    const [year, month, day] = opt.date.split('-');
+    const friendlyDate = `${day}/${month}/${year}`;
+    const hint = opt.disabled ? opt.reason : `Criar lancamento em ${friendlyDate}`;
+
+    label.innerHTML = `
+      <input type="checkbox" ${opt.disabled ? 'disabled' : 'checked'} data-month="${opt.monthKey}" data-date="${opt.date}">
+      <div class="repeat-meta">
+        <strong>${opt.label}</strong>
+        <small>${hint}</small>
+      </div>
+    `;
+
+    recurringContent.appendChild(label);
+
+    if (!opt.disabled) hasSelectable = true;
+  });
+
+  if (hasSelectable) {
+    recurringConfirm?.removeAttribute('disabled');
+  } else {
+    recurringConfirm?.setAttribute('disabled', 'disabled');
+  }
+}
+
+function closeRecurringModal() {
+  if (!recurringModal) return;
+  recurringModal.style.display = 'none';
+  recurringContent?.replaceChildren();
+
+  recurringContext = null;
+
+  if (recurringLastFocus) {
+    recurringLastFocus.focus();
+    recurringLastFocus = null;
+  }
+}
+
+function handleRecurringConfirm() {
+  if (!recurringContent || !recurringContext) return;
+
+  const selected = Array.from(recurringContent.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)'));
+  if (!selected.length) {
+    toast('Selecione ao menos um mes.', 'info');
+    return;
+  }
+
+  const descKey = normalizeText(recurringContext.descricao);
+  const template = { ...recurringContext };
+  const created = [];
+
+  selected.forEach(input => {
+    const iso = input.getAttribute('data-date');
+    const monthKey = input.getAttribute('data-month');
+    if (!iso || !monthKey) return;
+
+    const alreadyExists = items.some(entry =>
+      entry &&
+      entry.tipo === template.tipo &&
+      normalizeText(entry.descricao) === descKey &&
+      onlyMonth(entry.data) === monthKey
+    );
+    if (alreadyExists) return;
+
+    const clone = {
+      ...template,
+      id: crypto.randomUUID(),
+      data: iso
+    };
+    created.push(clone);
+    items.unshift(clone);
+  });
+
+  if (!created.length) {
+    toast('Nada a adicionar: os meses selecionados ja possuem lancamentos.', 'info');
+    closeRecurringModal();
+    return;
+  }
+
+  localStorage.setItem(KEY, JSON.stringify(items));
+  toast(`Movimentacao replicada em ${created.length} ${created.length === 1 ? 'mes' : 'meses'}.`, 'success');
+  closeRecurringModal();
+  render();
+}
+
+function suggestRecurring(item) {
+  if (!item) return false;
+
+  const descKey = normalizeText(item.descricao);
+  if (!descKey) return false;
+
+  const monthKey = onlyMonth(item.data);
+  if (!monthKey) return false;
+
+  const sameType = item.tipo;
+  let matches = 0;
+  let matchesOtherMonths = 0;
+
+  for (const entry of items) {
+    if (!entry) continue;
+    if (entry.id === item.id) continue;
+    if (entry.tipo !== sameType) continue;
+    if (!entry.descricao) continue;
+
+    if (normalizeText(entry.descricao) === descKey) {
+      matches += 1;
+      if (onlyMonth(entry.data) !== monthKey) {
+        matchesOtherMonths += 1;
+      }
+    }
+  }
+
+  if (!matches || !matchesOtherMonths) return false;
+
+  const months = collectRecurringMonths(item);
+  const hasSelectable = months.some(opt => !opt.disabled);
+  if (!hasSelectable) return false;
+
+  toast('Movimentacao adicionada! Deseja aplicar nos proximos meses?', 'success', 8000, {
+    action: {
+      label: 'Escolher meses',
+      onClick: () => openRecurringModal(item)
+    },
+    duration: 8000
+  });
+
+  return true;
+}
+
+function openRecurringModal(item) {
+  if (!item || !recurringModal || !recurringContent) return;
+
+  recurringContext = item;
+  const activeEl = document.activeElement;
+  recurringLastFocus = (activeEl && typeof activeEl.focus === 'function') ? activeEl : null;
+
+  renderRecurringModal();
+
+  recurringModal.style.display = 'flex';
+
+  setTimeout(() => {
+    const firstInput = recurringContent.querySelector('input[type="checkbox"]:not(:disabled)');
+    if (firstInput) {
+      firstInput.focus();
+    } else {
+      recurringClose?.focus();
+    }
+  }, 0);
+}
+
+recurringClose?.addEventListener('click', closeRecurringModal);
+recurringModal?.addEventListener('click', (e) => {
+  if (e.target === recurringModal) closeRecurringModal();
+});
+recurringConfirm?.addEventListener('click', handleRecurringConfirm);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && recurringModal?.style.display === 'flex') {
+    closeRecurringModal();
+  }
+});
 
 const themeToggle = document.getElementById('themeToggle');
 themeToggle?.addEventListener('click', () => {
