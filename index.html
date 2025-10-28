@@ -41,8 +41,8 @@
 
     <section class="grid" aria-label="resumo">
       <!-- Receitas -->
-      <div class="card">
-        <h3>Receitas</h3>
+      <div class="card card-income">
+        <h3><span class="icon-emoji" aria-hidden="true">💰</span> Receitas</h3>
         <div class="money green" id="sumReceitas">R$ 0,00</div>
         <button class="chart-btn" id="btnChartReceitas" title="Ver gráfico de receitas">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -53,8 +53,8 @@
       </div>
 
       <!-- Despesas -->
-      <div class="card">
-        <h3>Despesas</h3>
+      <div class="card card-expense">
+        <h3><span class="icon-emoji" aria-hidden="true">💸</span> Despesas</h3>
         <div class="money red" id="sumDespesas">R$ 0,00</div>
         <button class="chart-btn" id="btnChartDespesas" title="Ver gráfico de despesas">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -64,8 +64,8 @@
         </button>
       </div>
 
-      <div class="card">
-        <h3>Saldo</h3>
+      <div class="card card-balance">
+        <h3><span class="icon-emoji" aria-hidden="true">💹</span> Saldo</h3>
         <div class="money green" id="sumSaldo">R$ 0,00</div>
       </div>
 
@@ -216,14 +216,18 @@
                 <h3>Receitas x despesas (6 meses)</h3>
                 <small id="trendSubtitle">Sem dados suficientes.</small>
               </header>
-              <canvas id="trendChart" height="180"></canvas>
+              <div class="chart-area chart-area-line">
+                <canvas id="trendChart"></canvas>
+              </div>
             </div>
             <div class="chart-block">
               <header class="chart-block-header">
                 <h3>Ranking de categorias</h3>
                 <small id="categorySubtitle">Despesas por categoria do mes atual.</small>
               </header>
-              <canvas id="categoryChart" height="220"></canvas>
+              <div class="chart-area chart-area-bars">
+                <canvas id="categoryChart"></canvas>
+              </div>
             </div>
           </section>
 
@@ -256,7 +260,7 @@
 
 
   <div id="dailyWidget" class="daily-widget" aria-live="polite">
-    <button id="dailyWidgetClose" class="daily-widget-close" aria-label="Minimizar resumo diario">&times;</button>
+    <button id="dailyWidgetClose" type="button" class="daily-widget-close" aria-label="Minimizar resumo diario">&times;</button>
     <div class="daily-widget-title">Resumo diario</div>
     <div class="daily-widget-line">
       <span id="dailySpendLabel">Gasto de hoje</span>
@@ -267,7 +271,7 @@
       <strong id="dailyRemaining">--</strong>
     </div>
   </div>
-  <button id="dailyWidgetOpen" class="daily-widget-open" aria-label="Mostrar resumo diario" hidden>Resumo diario</button>
+  <button id="dailyWidgetOpen" type="button" class="daily-widget-open" aria-label="Mostrar resumo diario" aria-controls="dailyWidget" aria-expanded="true" hidden>Resumo diario</button>
 
   <script src="script.js"></script>
 </body>

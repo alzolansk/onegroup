@@ -92,6 +92,7 @@ const sumDespesas   = document.getElementById('sumDespesas');
 const sumSaldo      = document.getElementById('sumSaldo');
 const grandSaldo    = document.getElementById('grandSaldo');
 const tbody         = document.getElementById('tbody');
+const monthTextEl   = document.getElementById('monthText');
 
 const tipo          = document.getElementById('tipo');
 const descricao     = document.getElementById('descricao');
@@ -208,7 +209,9 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-dailyWidgetClose?.addEventListener('click', () => {
+// fecha o widget pelo botão "x"
+dailyWidgetClose?.addEventListener('click', (event) => {
+  event.preventDefault();
   settings.widgetCollapsed = true;
   saveSettings();
   applyWidgetState();
@@ -216,12 +219,39 @@ dailyWidgetClose?.addEventListener('click', () => {
     dailyWidgetOpen.focus();
   }
 });
-dailyWidgetOpen?.addEventListener('click', () => {
+
+// segurança: delega o clique no container (caso o alvo mude)
+dailyWidget?.addEventListener('click', (e) => {
+  const closeHit = e.target?.closest?.('#dailyWidgetClose');
+  if (closeHit) {
+    e.preventDefault();
+    settings.widgetCollapsed = true;
+    saveSettings();
+    applyWidgetState();
+    if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
+      dailyWidgetOpen.focus();
+    }
+  }
+});
+dailyWidgetOpen?.addEventListener('click', (event) => {
+  event.preventDefault();
   settings.widgetCollapsed = false;
   saveSettings();
   applyWidgetState();
   if (dailyWidgetClose) {
     dailyWidgetClose.focus();
+  }
+});
+
+// acessibilidade: fechar com ESC quando visível
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && dailyWidget && !dailyWidget.hidden) {
+    settings.widgetCollapsed = true;
+    saveSettings();
+    applyWidgetState();
+    if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
+      dailyWidgetOpen.focus();
+    }
   }
 });
 
@@ -949,6 +979,11 @@ function renderInsightsCharts() {
   } else if (categoryCanvasCtx) {
     categoryCanvasCtx.clearRect(0, 0, categoryCanvasCtx.canvas.width, categoryCanvasCtx.canvas.height);
   }
+
+  requestAnimationFrame(() => {
+    trendChartInstance?.resize();
+    categoryChartInstance?.resize();
+  });
 }
 
 function handleBudgetEdit() {
@@ -972,10 +1007,16 @@ function handleBudgetEdit() {
 }
 
 function applyWidgetState() {
-  if (!dailyWidget || !dailyWidgetOpen) return;
   const collapsed = !!settings.widgetCollapsed;
-  dailyWidget.hidden = collapsed;
-  dailyWidgetOpen.hidden = !collapsed;
+  if (dailyWidget) {
+    dailyWidget.hidden = collapsed;
+    dailyWidget.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+  }
+  if (dailyWidgetOpen) {
+    dailyWidgetOpen.hidden = !collapsed;
+    dailyWidgetOpen.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    dailyWidgetOpen.setAttribute('aria-hidden', collapsed ? 'false' : 'true');
+  }
 }
 
 function openInsightsModal() {
@@ -985,6 +1026,10 @@ function openInsightsModal() {
   insightsChartsDirty = true;
   renderInsightsCharts();
   insightsChartsDirty = false;
+  requestAnimationFrame(() => {
+    trendChartInstance?.resize();
+    categoryChartInstance?.resize();
+  });
   setTimeout(() => insightsClose?.focus(), 0);
 }
 
@@ -999,6 +1044,14 @@ function closeInsightsModal() {
 // ===== Render =====
 function render() {
   const month = monthPicker.value; // YYYY-MM
+  // atualiza o chip do mes
+  try {
+    if (monthTextEl && month) {
+      const [yy, mm] = month.split('-').map(Number);
+      const label = new Date(yy, (mm || 1) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      monthTextEl.textContent = label;
+    }
+  } catch {}
   const q = busca.value?.trim().toLowerCase() || '';
   const cat = filtroCategoria.value || '';
 
