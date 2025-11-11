@@ -1,3 +1,15 @@
+// ===== Authentication Check =====
+const currentUser = localStorage.getItem('onegroup_current_user');
+if (!currentUser) {
+    window.location.href = 'login.html';
+}
+
+// Display username in workspace pill
+const workspacePill = document.getElementById('workspacePill');
+if (workspacePill && currentUser) {
+    workspacePill.textContent = currentUser;
+}
+
 // ===== Helpers =====
 const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtMoney = n => BRL.format(n || 0);
@@ -157,6 +169,7 @@ filtroCategoria?.addEventListener('change', render);
 busca?.addEventListener('input', render);
 limparFiltros?.addEventListener('click', () => {
   filtroCategoria.value = '';
+  filtroCategoriaSelect?.setValue(''); // Reset custom select
   busca.value = '';
   render();
 });
@@ -190,9 +203,11 @@ addBtn?.addEventListener('click', () => {
     }
 
     tipo.value = '';
+    tipoSelect?.setValue(''); // Reset custom select
     descricao.value = '';
     dataInput.value = '';
     categoria.value = '';
+    categoriaSelect?.setValue(''); // Reset custom select
     valor.value = '';
 
     render();
@@ -212,11 +227,20 @@ window.addEventListener('keydown', (e) => {
 // fecha o widget pelo botão "x"
 dailyWidgetClose?.addEventListener('click', (event) => {
   event.preventDefault();
-  settings.widgetCollapsed = true;
-  saveSettings();
-  applyWidgetState();
-  if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
-    dailyWidgetOpen.focus();
+  
+  // Adiciona animação de saída
+  if (dailyWidget && !dailyWidget.hidden) {
+    dailyWidget.style.animation = 'widget-slide-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+    
+    setTimeout(() => {
+      settings.widgetCollapsed = true;
+      saveSettings();
+      applyWidgetState();
+      
+      if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
+        dailyWidgetOpen.focus();
+      }
+    }, 300);
   }
 });
 
@@ -225,11 +249,20 @@ dailyWidget?.addEventListener('click', (e) => {
   const closeHit = e.target?.closest?.('#dailyWidgetClose');
   if (closeHit) {
     e.preventDefault();
-    settings.widgetCollapsed = true;
-    saveSettings();
-    applyWidgetState();
-    if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
-      dailyWidgetOpen.focus();
+    
+    // Adiciona animação de saída
+    if (dailyWidget && !dailyWidget.hidden) {
+      dailyWidget.style.animation = 'widget-slide-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+      
+      setTimeout(() => {
+        settings.widgetCollapsed = true;
+        saveSettings();
+        applyWidgetState();
+        
+        if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
+          dailyWidgetOpen.focus();
+        }
+      }, 300);
     }
   }
 });
@@ -246,12 +279,18 @@ dailyWidgetOpen?.addEventListener('click', (event) => {
 // acessibilidade: fechar com ESC quando visível
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && dailyWidget && !dailyWidget.hidden) {
-    settings.widgetCollapsed = true;
-    saveSettings();
-    applyWidgetState();
-    if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
-      dailyWidgetOpen.focus();
-    }
+    // Adiciona animação de saída
+    dailyWidget.style.animation = 'widget-slide-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+    
+    setTimeout(() => {
+      settings.widgetCollapsed = true;
+      saveSettings();
+      applyWidgetState();
+      
+      if (dailyWidgetOpen && !dailyWidgetOpen.hidden) {
+        dailyWidgetOpen.focus();
+      }
+    }, 300);
   }
 });
 
@@ -268,16 +307,41 @@ function bindRowActions(container) {
 
       // EDITAR -> entra em modo inline
       if (act === 'edit') {
-        inlineEditingId = id;
-        render();
+        const rowEl = btn.closest('.trow');
+        
+        // Adiciona efeito de "preparação" antes da transição
+        if (rowEl) {
+          rowEl.querySelectorAll('.editable-field').forEach((field, index) => {
+            field.style.transition = 'all 0.2s ease';
+            field.style.transform = 'scale(1.02)';
+            field.style.background = 'color-mix(in oklab, var(--brand) 12%, transparent)';
+            
+            setTimeout(() => {
+              field.style.transform = 'scale(1)';
+              field.style.background = 'transparent';
+            }, 150 + (index * 30));
+          });
+        }
 
-        // máscara de valor nos inputs inline (opcional)
-        const rowEl = (tbody.querySelector(`button[data-id="${id}"][data-act="save"]`) || modalTbody.querySelector(`button[data-id="${id}"][data-act="save"]`))?.closest('.trow');
-        const valInput = rowEl?.querySelector('[data-field="valor"]');
-        valInput?.addEventListener('blur', () => {
-          const v = parseMoney(valInput.value);
-          valInput.value = v ? v.toFixed(2).replace('.', ',') : '';
-        });
+        // Define o ID de edição e re-renderiza após um delay para a animação
+        setTimeout(() => {
+          inlineEditingId = id;
+          render();
+
+          // Foco automático no primeiro campo editável
+          setTimeout(() => {
+            const newRowEl = (tbody.querySelector(`button[data-id="${id}"][data-act="save"]`) || modalTbody.querySelector(`button[data-id="${id}"][data-act="save"]`))?.closest('.trow');
+            const firstInput = newRowEl?.querySelector('.inline-control');
+            firstInput?.focus();
+
+            // máscara de valor nos inputs inline
+            const valInput = newRowEl?.querySelector('[data-field="valor"]');
+            valInput?.addEventListener('blur', () => {
+              const v = parseMoney(valInput.value);
+              valInput.value = v ? v.toFixed(2).replace('.', ',') : '';
+            });
+          }, 100);
+        }, 300);
 
         return;
       }
@@ -306,8 +370,18 @@ function bindRowActions(container) {
           toast('Movimentação salva!', 'success');
         }
 
-        inlineEditingId = null;
-        render();
+        // Animação de saída suave
+        const inputs = rowEl.querySelectorAll('.inline-control');
+        inputs.forEach((input, index) => {
+          input.style.animation = `field-fade-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+          input.style.animationDelay = `${index * 50}ms`;
+        });
+
+        // Aguarda animação antes de re-renderizar
+        setTimeout(() => {
+          inlineEditingId = null;
+          render();
+        }, 400);
         return;
       }
       
@@ -1009,7 +1083,13 @@ function handleBudgetEdit() {
 function applyWidgetState() {
   const collapsed = !!settings.widgetCollapsed;
   if (dailyWidget) {
-    dailyWidget.hidden = collapsed;
+    if (collapsed) {
+      dailyWidget.hidden = true;
+    } else {
+      dailyWidget.hidden = false;
+      // Limpa qualquer animação de saída anterior
+      dailyWidget.style.animation = '';
+    }
     dailyWidget.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
   }
   if (dailyWidgetOpen) {
@@ -1147,11 +1227,11 @@ function render() {
           </div>
         `
         : `
-          <div>${dataFmt}</div>
-          <div>${i.descricao || '<span style="color:#6e7796">—</span>'}</div>
-          <div><span class="chip">${i.categoria}</span></div>
-          <div>${i.tipo}</div>
-          <div class="value ${valueClass}">${sign} ${fmtMoney(i.valor)}</div>
+          <div class="editable-field">${dataFmt}</div>
+          <div class="editable-field">${i.descricao || '<span style="color:#6e7796">—</span>'}</div>
+          <div class="editable-field"><span class="chip">${i.categoria}</span></div>
+          <div class="editable-field">${i.tipo}</div>
+          <div class="editable-field value ${valueClass}">${sign} ${fmtMoney(i.valor)}</div>
           <div class="actions">
             <button class="btn small" data-act="edit" data-id="${i.id}">editar</button>
             <button class="btn small red" data-act="del" data-id="${i.id}">excluir</button>
@@ -1219,11 +1299,11 @@ function render() {
           </div>
         `
         : `
-          <div>${dataFmt}</div>
-          <div>${i.descricao || '<span style="color:#6e7796">—</span>'}</div>
-          <div><span class="chip">${i.categoria}</span></div>
-          <div>${i.tipo}</div>
-          <div class="value ${valueClass}">${sign} ${fmtMoney(i.valor)}</div>
+          <div class="editable-field">${dataFmt}</div>
+          <div class="editable-field">${i.descricao || '<span style="color:#6e7796">—</span>'}</div>
+          <div class="editable-field"><span class="chip">${i.categoria}</span></div>
+          <div class="editable-field">${i.tipo}</div>
+          <div class="editable-field value ${valueClass}">${sign} ${fmtMoney(i.valor)}</div>
           <div class="actions">
             <button class="btn small" data-act="edit" data-id="${i.id}">editar</button>
             <button class="btn small red" data-act="del" data-id="${i.id}">excluir</button>
@@ -1546,5 +1626,431 @@ themeToggle?.addEventListener('click', () => {
   localStorage.setItem(THEME_KEY, !isLight ? 'light' : 'dark');
 });
 
+// ===== Logout =====
+const logoutBtn = document.getElementById('logoutBtn');
+logoutBtn?.addEventListener('click', () => {
+  if (confirm('Deseja sair da aplicação?')) {
+    localStorage.removeItem('onegroup_current_user');
+    window.location.href = 'login.html';
+  }
+});
+
+// ===== Calendário customizado =====
+const calendarPicker = document.getElementById('calendarPicker');
+const calendarTrigger = document.getElementById('calendarTrigger');
+const calendarDropdown = document.getElementById('calendarDropdown');
+const calendarLabel = document.getElementById('calendarLabel');
+const calendarTitle = document.getElementById('calendarTitle');
+const calendarDays = document.getElementById('calendarDays');
+const prevMonth = document.getElementById('prevMonth');
+const nextMonth = document.getElementById('nextMonth');
+
+let currentCalendarDate = new Date();
+let selectedMonth = null;
+
+const monthNames = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+const monthNamesShort = [
+  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+];
+
+function updateCalendarLabel() {
+  if (!selectedMonth) {
+    selectedMonth = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), 1);
+  }
+  const monthName = monthNamesShort[selectedMonth.getMonth()];
+  const year = selectedMonth.getFullYear();
+  calendarLabel.textContent = `${monthName} ${year}`;
+  
+  // Atualiza o input hidden para manter compatibilidade
+  monthPicker.value = `${year}-${pad(selectedMonth.getMonth() + 1)}`;
+}
+
+function updateCalendarTitle() {
+  const monthName = monthNames[currentCalendarDate.getMonth()];
+  const year = currentCalendarDate.getFullYear();
+  calendarTitle.textContent = `${monthName} ${year}`;
+}
+
+function renderCalendarDays() {
+  calendarDays.innerHTML = '';
+  
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+  
+  // Primeiro dia do mês
+  const firstDay = new Date(year, month, 1);
+  // Último dia do mês
+  const lastDay = new Date(year, month + 1, 0);
+  
+  // Primeiro domingo da primeira semana (pode ser do mês anterior)
+  const startDate = new Date(firstDay);
+  startDate.setDate(firstDay.getDate() - firstDay.getDay());
+  
+  // Data de hoje
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  
+  // Mês selecionado
+  const selectedMonthStr = selectedMonth ? `${selectedMonth.getFullYear()}-${pad(selectedMonth.getMonth() + 1)}` : null;
+  
+  // Gerar 42 dias (6 semanas x 7 dias)
+  const currentDate = new Date(startDate);
+  for (let i = 0; i < 42; i++) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    dayElement.textContent = currentDate.getDate();
+    
+    const dateStr = `${currentDate.getFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
+    const monthStr = `${currentDate.getFullYear()}-${pad(currentDate.getMonth() + 1)}`;
+    
+    // Marcar dias de outros meses
+    if (currentDate.getMonth() !== month) {
+      dayElement.classList.add('other-month');
+    }
+    
+    // Marcar dia de hoje
+    if (dateStr === todayStr) {
+      dayElement.classList.add('today');
+    }
+    
+    // Marcar mês selecionado
+    if (monthStr === selectedMonthStr) {
+      dayElement.classList.add('current');
+    }
+    
+    // Adicionar evento de clique apenas para dias do mês atual
+    if (currentDate.getMonth() === month) {
+      dayElement.addEventListener('click', () => {
+        selectedMonth = new Date(year, month, 1);
+        updateCalendarLabel();
+        closeCalendar();
+        
+        // Trigger event for render
+        const event = new Event('change', { bubbles: true });
+        monthPicker.dispatchEvent(event);
+      });
+    }
+    
+    calendarDays.appendChild(dayElement);
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+}
+
+function openCalendar() {
+  calendarDropdown.classList.add('open');
+  updateCalendarTitle();
+  renderCalendarDays();
+  
+  // Focus management
+  setTimeout(() => {
+    const currentDay = calendarDays.querySelector('.current');
+    if (currentDay) {
+      currentDay.focus();
+    } else {
+      prevMonth.focus();
+    }
+  }, 0);
+}
+
+function closeCalendar() {
+  calendarDropdown.classList.remove('open');
+  calendarTrigger.focus();
+}
+
+// Event listeners
+calendarTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (calendarDropdown.classList.contains('open')) {
+    closeCalendar();
+  } else {
+    openCalendar();
+  }
+});
+
+prevMonth.addEventListener('click', () => {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+  updateCalendarTitle();
+  renderCalendarDays();
+});
+
+nextMonth.addEventListener('click', () => {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+  updateCalendarTitle();
+  renderCalendarDays();
+});
+
+// Fechar calendário ao clicar fora
+document.addEventListener('click', (e) => {
+  if (!calendarPicker.contains(e.target) && calendarDropdown.classList.contains('open')) {
+    closeCalendar();
+  }
+});
+
+// Keyboard navigation
+calendarDropdown.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeCalendar();
+  }
+});
+
+// Melhor acessibilidade
+calendarTrigger.setAttribute('aria-expanded', 'false');
+calendarDropdown.setAttribute('aria-hidden', 'true');
+
+const originalOpenCalendar = openCalendar;
+const originalCloseCalendar = closeCalendar;
+
+openCalendar = function() {
+  originalOpenCalendar();
+  calendarTrigger.setAttribute('aria-expanded', 'true');
+  calendarDropdown.setAttribute('aria-hidden', 'false');
+};
+
+closeCalendar = function() {
+  originalCloseCalendar();
+  calendarTrigger.setAttribute('aria-expanded', 'false');
+  calendarDropdown.setAttribute('aria-hidden', 'true');
+};
+
+// Inicializar calendário com mês atual
+selectedMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+currentCalendarDate = new Date(selectedMonth);
+updateCalendarLabel();
+
+// ===== Custom Select Dropdowns =====
+class CustomSelect {
+  constructor(wrapperId) {
+    this.wrapper = document.getElementById(wrapperId);
+    if (!this.wrapper) return;
+    
+    this.trigger = this.wrapper.querySelector('.custom-select-trigger');
+    this.dropdown = this.wrapper.querySelector('.custom-select-dropdown');
+    this.valueElement = this.wrapper.querySelector('.custom-select-value');
+    this.hiddenSelect = this.wrapper.parentElement.querySelector('select');
+    this.options = Array.from(this.wrapper.querySelectorAll('.custom-select-option:not(.placeholder-option)'));
+    this.allOptions = Array.from(this.wrapper.querySelectorAll('.custom-select-option'));
+    this.currentFocusIndex = -1;
+    
+    this.init();
+  }
+  
+  init() {
+    // Event listeners
+    this.trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+    
+    this.allOptions.forEach(option => {
+      if (!option.classList.contains('placeholder-option')) {
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.selectOption(option);
+        });
+        
+        // Hover for keyboard navigation
+        option.addEventListener('mouseenter', () => {
+          this.clearFocus();
+          option.classList.add('focused');
+          this.currentFocusIndex = this.options.indexOf(option);
+        });
+      }
+    });
+    
+    // Keyboard navigation
+    this.trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.toggle();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!this.isOpen()) {
+          this.open();
+        } else {
+          this.focusNext();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (this.isOpen()) {
+          this.focusPrevious();
+        }
+      } else if (e.key === 'Escape') {
+        this.close();
+      } else if (e.key === 'Enter' && this.isOpen()) {
+        e.preventDefault();
+        const focusedOption = this.options[this.currentFocusIndex];
+        if (focusedOption) {
+          this.selectOption(focusedOption);
+        }
+      }
+    });
+    
+    this.dropdown.addEventListener('keydown', (e) => {
+      e.preventDefault();
+      if (e.key === 'Escape') {
+        this.close();
+        this.trigger.focus();
+      } else if (e.key === 'ArrowDown') {
+        this.focusNext();
+      } else if (e.key === 'ArrowUp') {
+        this.focusPrevious();
+      } else if (e.key === 'Enter') {
+        const focusedOption = this.options[this.currentFocusIndex];
+        if (focusedOption) {
+          this.selectOption(focusedOption);
+        }
+      } else if (e.key === 'Tab') {
+        this.close();
+      }
+    });
+    
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!this.wrapper.contains(e.target) && this.isOpen()) {
+        this.close();
+      }
+    });
+    
+    // Sync with hidden select initial state
+    this.syncFromHiddenSelect();
+  }
+  
+  toggle() {
+    if (this.isOpen()) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+  
+  open() {
+    // Close other custom selects
+    document.querySelectorAll('.custom-select-dropdown.open').forEach(dropdown => {
+      if (dropdown !== this.dropdown) {
+        dropdown.classList.remove('open');
+        dropdown.parentElement.querySelector('.custom-select-trigger').classList.remove('open');
+      }
+    });
+    
+    this.dropdown.classList.add('open');
+    this.trigger.classList.add('open');
+    this.trigger.setAttribute('aria-expanded', 'true');
+    
+    // Set focus to selected item or first item
+    const selectedIndex = this.options.findIndex(opt => opt.classList.contains('selected'));
+    this.currentFocusIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    this.updateFocus();
+    
+    // Focus dropdown for keyboard navigation
+    setTimeout(() => {
+      this.dropdown.focus();
+    }, 100);
+  }
+  
+  close() {
+    this.dropdown.classList.remove('open');
+    this.trigger.classList.remove('open');
+    this.trigger.setAttribute('aria-expanded', 'false');
+    this.clearFocus();
+    this.currentFocusIndex = -1;
+  }
+  
+  isOpen() {
+    return this.dropdown.classList.contains('open');
+  }
+  
+  focusNext() {
+    if (this.currentFocusIndex < this.options.length - 1) {
+      this.currentFocusIndex++;
+    } else {
+      this.currentFocusIndex = 0; // Loop to first
+    }
+    this.updateFocus();
+  }
+  
+  focusPrevious() {
+    if (this.currentFocusIndex > 0) {
+      this.currentFocusIndex--;
+    } else {
+      this.currentFocusIndex = this.options.length - 1; // Loop to last
+    }
+    this.updateFocus();
+  }
+  
+  updateFocus() {
+    this.clearFocus();
+    if (this.currentFocusIndex >= 0 && this.currentFocusIndex < this.options.length) {
+      const focusedOption = this.options[this.currentFocusIndex];
+      focusedOption.classList.add('focused');
+      focusedOption.scrollIntoView({ block: 'nearest' });
+    }
+  }
+  
+  clearFocus() {
+    this.options.forEach(opt => opt.classList.remove('focused'));
+  }
+  
+  selectOption(option) {
+    const value = option.getAttribute('data-value');
+    const text = option.textContent.trim();
+    
+    // Update visual state
+    this.options.forEach(opt => opt.classList.remove('selected'));
+    option.classList.add('selected');
+    
+    // Update value display
+    this.valueElement.textContent = text;
+    this.valueElement.classList.toggle('placeholder', !value);
+    
+    // Update hidden select
+    this.hiddenSelect.value = value;
+    
+    // Trigger change event
+    const changeEvent = new Event('change', { bubbles: true });
+    this.hiddenSelect.dispatchEvent(changeEvent);
+    
+    // Close dropdown and return focus
+    this.close();
+    this.trigger.focus();
+  }
+  
+  syncFromHiddenSelect() {
+    const hiddenValue = this.hiddenSelect.value;
+    const matchingOption = this.options.find(opt => opt.getAttribute('data-value') === hiddenValue);
+    
+    if (matchingOption) {
+      this.options.forEach(opt => opt.classList.remove('selected'));
+      matchingOption.classList.add('selected');
+      this.valueElement.textContent = matchingOption.textContent.trim();
+      this.valueElement.classList.toggle('placeholder', !hiddenValue);
+    }
+  }
+  
+  setValue(value) {
+    const matchingOption = this.options.find(opt => opt.getAttribute('data-value') === value);
+    if (matchingOption) {
+      this.selectOption(matchingOption);
+    } else {
+      // Reset to placeholder
+      this.options.forEach(opt => opt.classList.remove('selected'));
+      const placeholderOption = this.allOptions.find(opt => opt.classList.contains('placeholder-option'));
+      if (placeholderOption) {
+        this.valueElement.textContent = placeholderOption.textContent.trim();
+        this.valueElement.classList.add('placeholder');
+      }
+      this.hiddenSelect.value = '';
+    }
+  }
+}
+
+// Inicializar custom selects
+const tipoSelect = new CustomSelect('tipoWrapper');
+const categoriaSelect = new CustomSelect('categoriaWrapper');
+const filtroCategoriaSelect = new CustomSelect('filtroCategoriaWrapper');
 
 render();

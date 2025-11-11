@@ -26,9 +26,51 @@
       </div>
       <h1>Controle de Gastos</h1>
       <div class="topbar">
-        <div class="pill" id="workspacePill">OneGroup</div>
-        <div class="month-wrap">
-          <input type="month" id="monthPicker"/>
+        <div class="pill" id="workspacePill"></div>
+        <button id="logoutBtn" class="logout-btn" aria-label="Sair" title="Sair">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+          <span>Sair</span>
+        </button>
+        <div class="calendar-picker" id="calendarPicker">
+          <button class="calendar-trigger" id="calendarTrigger" type="button" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+              <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+              <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span id="calendarLabel">Nov 2025</span>
+          </button>
+          <div class="calendar-dropdown" id="calendarDropdown" role="dialog" aria-modal="true">
+            <div class="calendar-header">
+              <button class="calendar-nav" id="prevMonth" type="button" aria-label="Mês anterior">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <polyline points="15,18 9,12 15,6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="calendar-title" id="calendarTitle">Novembro 2025</div>
+              <button class="calendar-nav" id="nextMonth" type="button" aria-label="Próximo mês">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <polyline points="9,18 15,12 9,6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="calendar-grid">
+              <div class="calendar-weekdays">
+                <div class="calendar-weekday">D</div>
+                <div class="calendar-weekday">S</div>
+                <div class="calendar-weekday">T</div>
+                <div class="calendar-weekday">Q</div>
+                <div class="calendar-weekday">Q</div>
+                <div class="calendar-weekday">S</div>
+                <div class="calendar-weekday">S</div>
+              </div>
+              <div class="calendar-days" id="calendarDays"></div>
+            </div>
+          </div>
+          <input type="month" id="monthPicker" style="position: absolute; opacity: 0; pointer-events: none;"/>
         </div>
         <button class="insights-trigger" id="insightsBtn" title="Ver insights e previsoes" aria-haspopup="dialog">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
@@ -44,24 +86,12 @@
       <div class="card card-income">
         <h3><span class="icon-emoji" aria-hidden="true">💰</span> Receitas</h3>
         <div class="money green" id="sumReceitas">R$ 0,00</div>
-        <button class="chart-btn" id="btnChartReceitas" title="Ver gráfico de receitas">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.2 12A9.2 9.2 0 1 1 12 2.8V12h9.2z"/>
-            <path d="M12 2.8A9.2 9.2 0 0 1 21.2 12H12V2.8z"/>
-          </svg>
-        </button>
       </div>
 
       <!-- Despesas -->
       <div class="card card-expense">
         <h3><span class="icon-emoji" aria-hidden="true">💸</span> Despesas</h3>
         <div class="money red" id="sumDespesas">R$ 0,00</div>
-        <button class="chart-btn" id="btnChartDespesas" title="Ver gráfico de despesas">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.2 12A9.2 9.2 0 1 1 12 2.8V12h9.2z"/>
-            <path d="M12 2.8A9.2 9.2 0 0 1 21.2 12H12V2.8z"/>
-          </svg>
-        </button>
       </div>
 
       <div class="card card-balance">
@@ -74,12 +104,25 @@
     <section class="panel movimento" aria-label="nova movimentação">
     <h2>NOVA MOVIMENTAÇÃO</h2>
     <div class="row">
-        <label class="control select" title="tipo">
-        <select id="tipo">
+        <label class="control custom-select" title="tipo">
+          <div class="custom-select-wrapper" id="tipoWrapper">
+            <button type="button" class="custom-select-trigger" id="tipoTrigger">
+              <span class="custom-select-value" id="tipoValue">tipo</span>
+              <svg class="custom-select-arrow" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="custom-select-dropdown" id="tipoDropdown" tabindex="-1">
+              <div class="custom-select-option placeholder-option" data-value="">tipo</div>
+              <div class="custom-select-option" data-value="receita">receita</div>
+              <div class="custom-select-option" data-value="despesa">despesa</div>
+            </div>
+          </div>
+          <select id="tipo" style="position: absolute; opacity: 0; pointer-events: none;">
             <option value="" disabled selected>tipo</option>
             <option value="receita">receita</option>
             <option value="despesa">despesa</option>
-        </select>
+          </select>
         </label>
         <label class="control">
         <input id="descricao" placeholder="descrição (opcional)"/>
@@ -87,8 +130,27 @@
         <label class="control">
         <input id="data" type="date" placeholder="dd/mm/aaaa"/>
         </label>
-        <label class="control select">
-        <select id="categoria">
+        <label class="control custom-select">
+          <div class="custom-select-wrapper" id="categoriaWrapper">
+            <button type="button" class="custom-select-trigger" id="categoriaTrigger">
+              <span class="custom-select-value" id="categoriaValue">categoria</span>
+              <svg class="custom-select-arrow" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="custom-select-dropdown" id="categoriaDropdown" tabindex="-1">
+              <div class="custom-select-option placeholder-option" data-value="">categoria</div>
+              <div class="custom-select-option" data-value="alimentação">alimentação</div>
+              <div class="custom-select-option" data-value="renda">renda</div>
+              <div class="custom-select-option" data-value="moradia">moradia</div>
+              <div class="custom-select-option" data-value="transporte">transporte</div>
+              <div class="custom-select-option" data-value="lazer">lazer</div>
+              <div class="custom-select-option" data-value="saúde">saúde</div>
+              <div class="custom-select-option" data-value="educação">educação</div>
+              <div class="custom-select-option" data-value="outros">outros</div>
+            </div>
+          </div>
+          <select id="categoria" style="position: absolute; opacity: 0; pointer-events: none;">
             <option value="" disabled selected>categoria</option>
             <option value="alimentação">alimentação</option>
             <option value="renda">renda</option>
@@ -98,7 +160,7 @@
             <option value="saúde">saúde</option>
             <option value="educação">educação</option>
             <option value="outros">outros</option>
-        </select>
+          </select>
         </label>
         <label class="control">
         <input id="valor" inputmode="decimal" placeholder="valor (ex: 123,45)"/>
@@ -110,8 +172,27 @@
     <section class="panel filtros" aria-label="filtros">
     <h2>FILTROS</h2>
     <div class="filters">
-        <label class="control select">
-        <select id="filtroCategoria">
+        <label class="control custom-select">
+          <div class="custom-select-wrapper" id="filtroCategoriaWrapper">
+            <button type="button" class="custom-select-trigger" id="filtroCategoriaTrigger">
+              <span class="custom-select-value" id="filtroCategoriaValue">todas as categorias</span>
+              <svg class="custom-select-arrow" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="custom-select-dropdown" id="filtroCategoriaDropdown" tabindex="-1">
+              <div class="custom-select-option placeholder-option" data-value="">todas as categorias</div>
+              <div class="custom-select-option" data-value="alimentação">alimentação</div>
+              <div class="custom-select-option" data-value="renda">renda</div>
+              <div class="custom-select-option" data-value="moradia">moradia</div>
+              <div class="custom-select-option" data-value="transporte">transporte</div>
+              <div class="custom-select-option" data-value="lazer">lazer</div>
+              <div class="custom-select-option" data-value="saúde">saúde</div>
+              <div class="custom-select-option" data-value="educação">educação</div>
+              <div class="custom-select-option" data-value="outros">outros</div>
+            </div>
+          </div>
+          <select id="filtroCategoria" style="position: absolute; opacity: 0; pointer-events: none;">
             <option value="">todas as categorias</option>
             <option value="alimentação">alimentação</option>
             <option value="renda">renda</option>
@@ -121,7 +202,7 @@
             <option value="saúde">saúde</option>
             <option value="educação">educação</option>
             <option value="outros">outros</option>
-        </select>
+          </select>
         </label>
         <label class="control">
         <input id="busca" placeholder="buscar por descrição…"/>
@@ -260,8 +341,10 @@
 
 
   <div id="dailyWidget" class="daily-widget" aria-live="polite">
-    <button id="dailyWidgetClose" type="button" class="daily-widget-close" aria-label="Minimizar resumo diario">&times;</button>
-    <div class="daily-widget-title">Resumo diario</div>
+    <div class="daily-widget-header">
+      <div class="daily-widget-title">Resumo diário</div>
+      <button id="dailyWidgetClose" type="button" class="daily-widget-close" aria-label="Minimizar resumo diário">&times;</button>
+    </div>
     <div class="daily-widget-line">
       <span id="dailySpendLabel">Gasto de hoje</span>
       <strong id="dailySpend">--</strong>
