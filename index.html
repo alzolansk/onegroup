@@ -1,132 +1,29 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Controle de Gastos • OneGroup</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg: #0f1220;
-      --surface: #171b2e;
-      --muted: #9aa3b2;
-      --text: #e6e8ef;
-      --accent: #6c6ff9;
-      --green: #23d16b;
-      --red: #ff4d4f;
-      --outline: #232844;
-      --chip: #111525;
-      --chip-border: #263055;
-      --btn: #222845;
-      --btn-hover: #2a3154;
-      --shadow: 0 8px 28px rgba(0,0,0,.35);
-      --radius-xl: 18px;
-      --radius-lg: 14px;
-      --radius-md: 12px;
-      --radius-sm: 10px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:var(--bg); color:var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      letter-spacing:.2px;
-    }
-    .container{max-width:1120px;margin:32px auto;padding:0 20px}
-    header{
-      display:flex;align-items:center;gap:16px;margin-bottom:14px;
-    }
-    .logo{
-      width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
-      background:linear-gradient(135deg,#2d325a,#0b0e1a); border:1px solid var(--outline);
-      box-shadow: var(--shadow);
-      font-weight:800; letter-spacing:.5px;
-    }
-    h1{font-size:36px;margin:0;font-weight:800}
-    .topbar{
-      display:flex;align-items:center;gap:12px; margin-left:auto;
-    }
-    .pill{background:#1b2042;border:1px solid var(--outline);color:#cbd1ff;padding:10px 16px;border-radius:999px;font-weight:700}
-    .month-wrap{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--outline);padding:8px 12px;border-radius:999px}
-    .month-wrap input[type="month"]{background:transparent;border:none;color:var(--text);font-weight:600;outline:none}
-    .grand-saldo{font-size:28px;font-weight:800;color:var(--green)}
-
-    /* grid of summary cards */
-    .grid{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px;margin-bottom:22px
-    }
-    .card{
-      background:var(--surface);border:1px solid var(--outline);border-radius:var(--radius-xl);
-      padding:18px 22px; box-shadow:var(--shadow);
-    }
-    .card h3{margin:0 0 8px 0;font-size:14px;letter-spacing:.4px;color:var(--muted)}
-    .money{font-size:30px;font-weight:900}
-    .money.green{color:var(--green)}
-    .money.red{color:var(--red)}
-
-    /* form */
-    .panel{
-      background:var(--surface);border:1px solid var(--outline);border-radius:var(--radius-xl);
-      padding:20px 18px;margin-bottom:18px; box-shadow: var(--shadow);
-    }
-    .panel h2{margin:0 0 16px 2px;font-size:22px}
-    .row{display:grid; grid-template-columns:170px 1fr 180px 200px 1fr 140px; gap:12px}
-    .row + .row{margin-top:12px}
-    .control{
-      position:relative; display:flex; align-items:center; height:46px; background:#12162a; border:1px solid var(--outline);
-      border-radius:var(--radius-lg); padding:0 12px;
-    }
-    .control:focus-within{outline:2px solid #313a70}
-    select, input{width:100%;background:transparent;border:none;color:var(--text);outline:none;font-size:14px}
-    input::placeholder{color:#5d6680}
-    .btn{
-      height:46px; border:none; border-radius:var(--radius-lg); background:var(--btn); color:#eaf0ff; font-weight:700;
-      cursor:pointer; transition:transform .08s ease, background .2s ease; box-shadow: var(--shadow);
-    }
-    .btn:hover{background:var(--btn-hover)}
-    .btn:active{transform:translateY(1px)}
-    .btn.primary{background:linear-gradient(180deg,#3a69ff,#384af7)}
-    .btn.primary:hover{filter:brightness(1.05)}
-
-    /* filters */
-    .filters{display:grid;grid-template-columns:200px 1fr 140px; gap:12px; margin-top:12px}
-
-    /* table/list */
-    .table{
-      background:var(--surface); border:1px solid var(--outline); border-radius:var(--radius-xl); box-shadow:var(--shadow);
-      overflow:hidden
-    }
-    .thead, .trow{display:grid; grid-template-columns:150px 1fr 220px 140px 160px 160px; gap:10px; align-items:center}
-    .thead{padding:12px 16px; background:#141830; color:#a6aecc; font-size:12px; letter-spacing:.5px; text-transform:uppercase}
-    .trow{padding:16px 16px; border-top:1px solid var(--outline)}
-    .trow .value{font-weight:800}
-    .value.negative{color:var(--red)}
-    .value.positive{color:var(--green)}
-    .chip{
-      display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; border:1px solid var(--chip-border);
-      background:var(--chip); color:#c9d0ff; font-weight:700; font-size:12px
-    }
-    .actions{display:flex; gap:8px}
-    .btn.small{height:38px; padding:0 14px; font-weight:700; border:1px solid var(--outline); background:#1a2040}
-    .btn.small.red{background:#2a1420}
-
-    /* responsive */
-    @media (max-width: 980px){
-      .grid{grid-template-columns:1fr}
-      .row{grid-template-columns:1fr}
-      .filters{grid-template-columns:1fr}
-      .thead{display:none}
-      .trow{grid-template-columns:1fr; gap:6px}
-    }
-    footer{color:#778; margin:20px 4px; font-size:12px; text-align:right}
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Controle de Gastos • OneGroup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="container">
+    <div id="toaster" aria-live="polite" aria-atomic="true"></div>
     <header>
-      <div class="logo">OG</div>
+
+        <button id="themeToggle" class="theme-toggle" aria-label="alternar tema" title="alternar tema">
+            <svg class="sun" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="23"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="23" y2="12"/><line x1="4.2" y1="4.2" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.8" y2="19.8"/><line x1="4.2" y1="19.8" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.8" y2="4.2"/></g></svg>
+            <svg class="moon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M21 12.8A9 9 0 0 1 11.2 3 7.5 7.5 0 1 0 21 12.8z"/></svg>
+        </button>
+
+      <div class="logo">          
+        <img src="images/logo-onegroup-two.png" style="width: 35px; height: auto; z-index: 10;" alt="Logo OneGroup">
+      </div>
       <h1>Controle de Gastos</h1>
       <div class="topbar">
         <div class="pill" id="workspacePill"></div>
@@ -185,18 +82,23 @@
     </header>
 
     <section class="grid" aria-label="resumo">
-      <div class="card">
-        <h3>Receitas</h3>
+      <!-- Receitas -->
+      <div class="card card-income">
+        <h3><span class="icon-emoji" aria-hidden="true">💰</span> Receitas</h3>
         <div class="money green" id="sumReceitas">R$ 0,00</div>
       </div>
-      <div class="card">
-        <h3>Despesas</h3>
+
+      <!-- Despesas -->
+      <div class="card card-expense">
+        <h3><span class="icon-emoji" aria-hidden="true">💸</span> Despesas</h3>
         <div class="money red" id="sumDespesas">R$ 0,00</div>
       </div>
-      <div class="card">
-        <h3>Saldo</h3>
+
+      <div class="card card-balance">
+        <h3><span class="icon-emoji" aria-hidden="true">💹</span> Saldo</h3>
         <div class="money green" id="sumSaldo">R$ 0,00</div>
       </div>
+
     </section>
 
     <section class="panel movimento" aria-label="nova movimentação">
@@ -223,10 +125,10 @@
           </select>
         </label>
         <label class="control">
-          <input id="descricao" placeholder="descrição (opcional)"/>
+        <input id="descricao" placeholder="descrição (opcional)"/>
         </label>
         <label class="control">
-          <input id="data" type="date" placeholder="dd/mm/aaaa"/>
+        <input id="data" type="date" placeholder="dd/mm/aaaa"/>
         </label>
         <label class="control custom-select">
           <div class="custom-select-wrapper" id="categoriaWrapper">
@@ -261,7 +163,7 @@
           </select>
         </label>
         <label class="control">
-          <input id="valor" inputmode="decimal" placeholder="valor (ex: 123,45)"/>
+        <input id="valor" inputmode="decimal" placeholder="valor (ex: 123,45)"/>
         </label>
         <button class="btn primary" id="addBtn">adicionar</button>
     </div>
@@ -303,10 +205,10 @@
           </select>
         </label>
         <label class="control">
-          <input id="busca" placeholder="buscar por descrição…"/>
+        <input id="busca" placeholder="buscar por descrição…"/>
         </label>
         <button class="btn" id="limparFiltros">limpar filtros</button>
-      </div>
+    </div>
     </section>
 
     <section class="table" aria-label="lista">
@@ -320,6 +222,119 @@
       </div>
       <div id="tbody"></div>
     </section>
+
+    <div id="viewAllWrap">
+    <button id="viewAllBtn">ver todos</button>
+    </div>
+
+    <div id="listModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+        <div class="modal-header">
+        <div id="modalTitle" class="modal-title">Todas as movimentações</div>
+        <button class="modal-close" id="closeModalBtn">fechar</button>
+        </div>
+        <div class="modal-body">
+        <section class="table">
+            <div class="thead">
+            <div>Data</div><div>Descrição</div><div>Categoria</div>
+            <div>Tipo</div><div>Valor</div><div>Ações</div>
+            </div>
+            <div id="modalTbody"></div>
+        </section>
+        </div>
+    </div>
+    </div>
+
+    <!-- modal gráficos -->
+    <div class="modal-overlay" id="chartModal" style="display:none">
+      <div class="modal chart-modal">
+        <div class="modal-header">
+          <div class="modal-title" id="chartTitle">Gráfico</div>
+          <button class="modal-close" id="chartClose">fechar</button>
+        </div>
+        <div class="modal-body">
+          <canvas id="chartCanvas" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- modal insights -->
+    <div class="modal-overlay" id="insightsModal" role="dialog" aria-modal="true" aria-labelledby="insightsTitle">
+      <div class="modal insights-modal">
+        <div class="modal-header">
+          <div class="modal-title" id="insightsTitle">Insights e previsoes</div>
+          <button class="modal-close" id="insightsClose">fechar</button>
+        </div>
+        <div class="modal-body insights-body">
+          <section class="insights-cards" aria-label="indicadores rapidos">
+            <article class="insight-card" id="economyCard">
+              <header>
+                <span class="insight-label">Meta de gastos</span>
+                <button id="budgetEdit" class="insight-action" type="button">ajustar</button>
+              </header>
+              <div class="insight-value" id="economySummary">--</div>
+              <p class="insight-detail" id="economyDetail">Defina uma meta mensal para acompanhar sua economia.</p>
+            </article>
+            <article class="insight-card">
+              <header>
+                <span class="insight-label">Media diaria</span>
+              </header>
+              <div class="insight-value" id="dailyAverageValue">--</div>
+              <p class="insight-detail" id="dailyAverageDetail">Calculo baseado nas despesas do mes selecionado.</p>
+            </article>
+            <article class="insight-card">
+              <header>
+                <span class="insight-label">Previsao de gastos</span>
+              </header>
+              <div class="insight-value" id="forecastValue">--</div>
+              <p class="insight-detail" id="forecastDetail">Analise os ultimos meses para estimar este ciclo.</p>
+            </article>
+          </section>
+
+          <section class="insights-charts" aria-label="graficos comparativos">
+            <div class="chart-block">
+              <header class="chart-block-header">
+                <h3>Receitas x despesas (6 meses)</h3>
+                <small id="trendSubtitle">Sem dados suficientes.</small>
+              </header>
+              <div class="chart-area chart-area-line">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-block">
+              <header class="chart-block-header">
+                <h3>Ranking de categorias</h3>
+                <small id="categorySubtitle">Despesas por categoria do mes atual.</small>
+              </header>
+              <div class="chart-area chart-area-bars">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+          </section>
+
+          <section class="insights-list" aria-label="insights automaticos">
+            <h3>Insights automaticos</h3>
+            <ul id="insightList" class="insight-list"></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="recurringModal" role="dialog" aria-modal="true" aria-labelledby="recurringTitle">
+      <div class="modal repeat-modal">
+        <div class="modal-header">
+          <div class="modal-title" id="recurringTitle">Adicionar em outros meses</div>
+          <button class="modal-close" id="recurringClose">fechar</button>
+        </div>
+        <div class="modal-body repeat-body">
+          <p class="repeat-helper">Selecione os meses futuros para replicar a movimentacao:</p>
+          <div id="recurringContent" class="repeat-content"></div>
+          <div class="repeat-actions">
+            <button class="btn primary" id="recurringConfirm">adicionar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer>OneGroup • 2025</footer>
   </div>
